@@ -103,7 +103,7 @@ Replace `/path/to/your/config` with the actual path to your Home Assistant confi
 
 ```bash
 git clone https://github.com/saihgupr/HomeAssistantVersionControlBeta.git
-cd HomeAssistantVersionControlBeta/havc
+cd HomeAssistantVersionControlBeta/homeassistant-version-control
 docker build --build-arg BUILD_FROM=alpine:latest -t home-assistant-version-control .
 
 docker run -d \

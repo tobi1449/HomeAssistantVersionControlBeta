@@ -2711,17 +2711,28 @@ function renderUnchangedView(content, options = {}) {
     `;
   });
 
-  // Wrap in same structure as timeline uses for unchanged files
+  // Format current date like "Nov 30, 2025 1:04 PM"
+  const now = new Date();
+  const formattedDate = formatDateForBanner(now.toISOString());
+
+  // Wrap in file-history-viewer with header banner
   return `
-    <div class="diff-view-container">
-      <div class="diff-header-unified">
-        <div class="diff-header-text">
-          Current Version
+    <div class="file-history-viewer">
+      <div class="file-history-header">
+        <div class="file-history-info">
+          <div class="history-position">Version 1 of 1 — ${formattedDate}</div>
         </div>
       </div>
-      <div class="diff-viewer-shell ${currentDiffStyle}">
-        <div class="diff-viewer-unified">
-          ${contentHtml}
+      <div class="diff-view-container">
+        <div class="diff-header-unified">
+          <div class="diff-header-text">
+            Current Version
+          </div>
+        </div>
+        <div class="diff-viewer-shell ${currentDiffStyle}">
+          <div class="diff-viewer-unified">
+            ${contentHtml}
+          </div>
         </div>
       </div>
     </div>

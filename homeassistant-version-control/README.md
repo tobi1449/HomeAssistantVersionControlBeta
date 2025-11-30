@@ -33,12 +33,6 @@ Home Assistant Version Control acts as a "time machine" for your setup. It autom
 * **Themes:** Toggle between Light and Dark modes.
 * **Diff Viewer:** Customize your diff experience with 8 different styles (High Contrast, GitHub Classic, Neon, etc.) and choose between Unified or Side-by-Side views.
 
-
-
-• Accent Colors: Pick from seven curated color palettes.
-• Themes: Switch instantly between Light and Dark.
-• Diff Viewer: Choose from eight diff styles (High Contrast, GitHub Classic, Neon, and more) and view changes in Unified or Side-by-Side mode.
-
 ---
 
 ## Installation
@@ -123,7 +117,6 @@ docker run -d \
 Access the interface at `http://localhost:54001`.
 
 ---
-
 
 
 ### Restore Actions

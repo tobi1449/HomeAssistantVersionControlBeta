@@ -131,7 +131,7 @@
     "debounce_time": "Debounce Time",
     "debounce_time_desc": "Time to wait before creating a version after file changes",
     "history_retention": "History Retention",
-    "history_retention_desc": "Merge versions older than the specified time period into a single version",
+    "history_retention_desc": "Merge versions older than the specified time period",
     "retention_type": "Retention Type",
     "retention_value": "Retention Value",
     "retention_unit": "Retention Unit",

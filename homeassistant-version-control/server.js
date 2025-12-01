@@ -339,6 +339,11 @@ function generateGitignoreContent() {
   content += `!.storage/lovelace.*\n`;
 
   content += `\n# Allow directory traversal\n${dirTraversal}\n`;
+
+  // Re-ignore macOS metadata files (even if they match allowed extensions)
+  content += `\n# Re-ignore macOS metadata files (even if they match allowed extensions)\n`;
+  content += `._*\n`;
+
   return content;
 }
 

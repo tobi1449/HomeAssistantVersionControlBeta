@@ -1994,7 +1994,10 @@ async function displayCommitDiff(status, hash, diff, commitDate = null) {
     return `${item.file.file} (${action})`;
   });
 
-  const unchangedFilesSummary = filesWithoutChanges.map(item => item.file.file);
+  const unchangedFilesSummary = filesWithoutChanges.map(item => {
+    const action = item.file.status === 'A' ? 'Added' : item.file.status === 'D' ? 'Deleted' : 'Modified';
+    return `${item.file.file} (${action})`;
+  });
 
   const fileSummary = [...changedFilesSummary, ...unchangedFilesSummary].join('<br>') || (showChangedOnly ? t('timeline.no_files_with_changes') : t('timeline.all_files'));
 
@@ -2298,9 +2301,27 @@ async function showFileHistory(filePath) {
         }
       }
 
+
       // Scanning complete
       isScanningHistory = false;
       if (currentFileHistory.length > 0) {
+        // Check if the oldest commit is when the file was added
+        // by seeing if the file exists in the parent commit
+        const oldestCommit = currentFileHistory[currentFileHistory.length - 1];
+        try {
+          // Try to fetch the file from the parent commit (commitHash^)
+          const parentResponse = await fetch(`${API}/git/file-at-commit?filePath=${encodeURIComponent(filePath)}&commitHash=${oldestCommit.hash}^`);
+          const parentData = await parentResponse.json();
+
+          // If file doesn't exist in parent, this commit added the file
+          if (!parentData.success) {
+            oldestCommit.status = 'A';
+          }
+        } catch (error) {
+          // If there's an error (e.g., no parent commit), assume it was added
+          oldestCommit.status = 'A';
+        }
+
         updateFileHistoryNavigation(filePath);
       }
 
@@ -3107,8 +3128,16 @@ function displayFileHistory(filePath) {
     return;
   }
 
-  // Set the panel title
-  document.getElementById('rightPanelTitle').textContent = filePath;
+  // Set the panel title - add "(Added)" if the file was added
+  let title = filePath;
+  if (currentFileHistory.length > 0) {
+    // Check if the oldest commit shows this file was added
+    const oldestCommit = currentFileHistory[currentFileHistory.length - 1];
+    if (oldestCommit && oldestCommit.status === 'A') {
+      title += ' (Added)';
+    }
+  }
+  document.getElementById('rightPanelTitle').textContent = title;
   // document.getElementById('itemsSubtitle').textContent = `History (${currentFileHistory.length} versions with changes)`;
   document.getElementById('rightPanelActions').innerHTML = '';
 

@@ -1885,12 +1885,23 @@ async function displayCommitDiff(status, hash, diff, commitDate = null) {
         commitContent = commitContent.substring(commitContent.indexOf('\n') + 1);
       }
 
+      // Special handling for Added files in shifted mode:
+      // Compare the file against itself (commit version vs commit version)
+      // This makes it behave like the initial commit - shows content but no diff
+      // Only subsequent modifications will show as changed diffs
+      let leftContent = currentContent;
+      let leftLabel = 'Current Version';
 
-      const currentLines = currentContent.split(/\r\n?|\n/);
+      if (diffMode === 'shifted' && file.status === 'A') {
+        leftContent = commitContent;
+        leftLabel = `Version ${hash.substring(0, 8)}`;
+      }
+
+      const currentLines = leftContent.split(/\r\n?|\n/);
       const commitLines = commitContent.split(/\r\n?|\n/);
 
-      const diffHtml = generateDiff(currentContent, commitContent, {
-        leftLabel: 'Current Version',
+      const diffHtml = generateDiff(leftContent, commitContent, {
+        leftLabel: leftLabel,
         rightLabel: rightLabel,
         bannerText: file.status === 'A' ? `${file.file} (Added)` : file.file,
         returnNullIfNoChanges: true,

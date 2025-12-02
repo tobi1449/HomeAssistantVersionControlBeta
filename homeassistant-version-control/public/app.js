@@ -1655,6 +1655,9 @@ async function displayCommits(commits) {
         // This ensures the left panel shows clean filenames while the right panel shows status
         fileName = fileName.replace(/\s+\((Added|Deleted|Modified)\)$/i, '');
 
+        // Remove surrounding quotes from filenames (e.g. "pizza-avocado 1 copy.yaml" becomes pizza-avocado 1 copy.yaml)
+        fileName = fileName.replace(/^["']|["']$/g, '');
+
         html += `
               <div class="commit" onclick="showCommit('${commit.hash}')" id="commit-${commit.hash}">
                 <div class="commit-time">${timeString}</div>
@@ -1882,18 +1885,12 @@ async function displayCommitDiff(status, hash, diff, commitDate = null) {
         commitContent = commitContent.substring(commitContent.indexOf('\n') + 1);
       }
 
-      // Special override for Added files in shifted mode:
-      // Force "Current" content (left side) to match "Commit" content (right side)
-      // This ensures a perfect match -> "No changes found" -> Clean file display
-      if (diffMode === 'shifted' && file.status === 'A') {
-        currentContent = commitContent;
-      }
 
       const currentLines = currentContent.split(/\r\n?|\n/);
       const commitLines = commitContent.split(/\r\n?|\n/);
 
       const diffHtml = generateDiff(currentContent, commitContent, {
-        leftLabel: (diffMode === 'shifted' && file.status === 'A') ? `Version ${hash.substring(0, 8)}` : 'Current Version',
+        leftLabel: 'Current Version',
         rightLabel: rightLabel,
         bannerText: file.status === 'A' ? `${file.file} (Added)` : file.file,
         returnNullIfNoChanges: true,

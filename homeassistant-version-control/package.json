@@ -1,6 +1,6 @@
 {
   "name": "havc",
-  "version": "1.0.8",
+  "version": "1.0.0",
   "description": "Home Assistant Version Control - Git-powered time travel for your HA config",
   "main": "server.js",
   "type": "module",

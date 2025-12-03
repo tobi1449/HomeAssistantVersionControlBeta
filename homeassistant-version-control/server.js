@@ -1282,8 +1282,10 @@ app.post('/api/list-yaml-files', async (req, res) => {
 
 
 
+
 // File watcher for auto-commit (will be initialized in initRepo)
-let debounceTimer = null;
+// Use a Map to track debounce timers per file
+const debounceTimers = new Map();
 let watcher = null;
 
 function initializeWatcher() {
@@ -1336,17 +1338,22 @@ function initializeWatcher() {
 
   // Handler function for both 'change' and 'add' events
   const handleFileEvent = async (filePath, eventType) => {
-    console.log(`File ${eventType}: ${filePath}`);
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
+    const relativePath = filePath.replace(CONFIG_PATH + '/', '');
+    console.log(`[watcher] File ${eventType}: ${relativePath}`);
+
+    // Clear any existing timer for this specific file
+    if (debounceTimers.has(filePath)) {
+      clearTimeout(debounceTimers.get(filePath));
+    }
+
+    // Set a new timer for this specific file
+    const timer = setTimeout(async () => {
       try {
         // Ensure git is initialized
         if (!gitInitialized) {
           console.log('[watcher] Git not initialized yet, retrying...');
           await initRepo();
         }
-
-        const relativePath = filePath.replace(CONFIG_PATH + '/', '');
 
         // Check if file is a config file (has allowed extension) or is a lovelace storage file
         const hasAllowedExt = getConfiguredExtensions().some(ext =>
@@ -1357,6 +1364,7 @@ function initializeWatcher() {
 
         if (!hasAllowedExt && !isLovelaceFile) {
           console.log(`[watcher] Skipping non-config file: ${relativePath}`);
+          debounceTimers.delete(filePath);
           return;
         }
 
@@ -1371,6 +1379,7 @@ function initializeWatcher() {
         const status = await gitStatus();
         if (status.isClean()) {
           console.log(`[watcher] No changes to commit for ${relativePath} (already up to date)`);
+          debounceTimers.delete(filePath);
           return;
         }
 
@@ -1398,6 +1407,9 @@ function initializeWatcher() {
           console.log('[watcher] Running retention cleanup after commit...');
           await runRetentionCleanup();
         }
+
+        // Clean up the timer reference
+        debounceTimers.delete(filePath);
       } catch (error) {
         // Only log actual errors, not "nothing to commit" errors
         if (error.message && !error.message.includes('nothing to commit')) {
@@ -1407,8 +1419,13 @@ function initializeWatcher() {
             console.error('[watcher] The havc user needs write access to /config directory');
           }
         }
+        // Clean up the timer reference even on error
+        debounceTimers.delete(filePath);
       }
     }, getDebounceTimeMs());
+
+    // Store the timer reference for this file
+    debounceTimers.set(filePath, timer);
   };
 
   // Watch for file changes
@@ -1429,6 +1446,7 @@ function initializeWatcher() {
     console.error('[watcher] Error:', error);
   });
 }
+
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

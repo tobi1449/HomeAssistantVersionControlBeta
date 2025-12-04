@@ -4762,7 +4762,7 @@ function handleRestoreButtonDown(sourceHash, targetHash) {
     // Update button text
     const textEl = document.getElementById('restore-btn-text');
     if (textEl) {
-      textEl.textContent = 'RESET ALL FILES';
+      textEl.textContent = t('timeline.reset_all_files');
     }
 
     // Haptic feedback if available

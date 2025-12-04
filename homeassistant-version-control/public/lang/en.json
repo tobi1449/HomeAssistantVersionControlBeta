@@ -35,7 +35,7 @@
     "all_files": "All files",
     "no_files": "No files",
     "files_in_version": "Files in Version",
-    "restore_commit": "Restore Version",
+    "restore_commit": "Restore This Version",
     "commit_restored": "File restored successfully!",
     "commit_restore_error": "Error restoring file",
     "files_restored": "Restored {files}!",

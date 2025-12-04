@@ -2520,7 +2520,7 @@ async function showAutomationHistory(automationId) {
           isFirstVersion = false;
           // Set the panel title
           document.getElementById('rightPanelTitle').textContent = auto ? auto.name : 'Automation';
-          document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreAutomationVersion('${automationId}')" title="This will overwrite the current automation with this version">Confirm Restore</button>`;
+          document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreAutomationVersion('${automationId}')" title="${t('diff.tooltip_overwrite_automation')}">${t('timeline.restore_commit')}</button>`;
           displayAutomationHistory();
         } else {
           // Update the navigation controls for subsequent versions
@@ -2803,7 +2803,7 @@ async function showScriptHistory(scriptId) {
           isFirstVersion = false;
           // Set the panel title
           document.getElementById('rightPanelTitle').textContent = script ? script.name : 'Script';
-          document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreScriptVersion('${scriptId}')" title="This will overwrite the current script with this version">Confirm Restore</button>`;
+          document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreScriptVersion('${scriptId}')" title="${t('diff.tooltip_overwrite_script')}">${t('timeline.restore_commit')}</button>`;
           displayScriptHistory();
         } else {
           // Update the navigation controls for subsequent versions
@@ -3279,7 +3279,7 @@ async function loadFileHistoryDiff(filePath) {
     });
 
     if (diffHtml) {
-      document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreFileVersion('${filePath}')" title="This will overwrite the current file with this version">Confirm Restore</button>`;
+      document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreFileVersion('${filePath}')" title="${t('diff.tooltip_overwrite_file')}">${t('timeline.restore_commit')}</button>`;
     } else {
       document.getElementById('rightPanelActions').innerHTML = '';
     }

@@ -31,10 +31,13 @@ Home Assistant Version Control provides complete version history for your setup.
 ###  Customization
 * **Color Theme:** Choose from seven preset color palettes.
 * **Light Themes:** Toggle between Light and Dark modes.
-* **Comparison View:** Customize your comparison experience with 8 different styles (High Contrast, GitHub Classic, Neon, etc.) and choose between Stacked or Side-by-Side layouts.
-* **Comparison Change Mode:**
-  * **On (Default):** Compares your **current live files** against the **version before the selected backup**. This highlights the changes introduced in that backup *plus* any subsequent changes.
-  * **Off:** Compares your **current live files** against the **selected backup**. This shows exactly how your current system differs from that specific point in time.
+* **Comparison View:**
+  * **Layout:** Choose between Stacked (Unified) or Side-by-Side views.
+  * **Comparison:**
+    * **Changes (Default):** Compare against the **Previous Version** to see exactly what changed in that specific backup.
+    * **Current:** Compare against your **Current File** on disk to see how far you've deviated since that backup.
+  * **Style:** Customize your diffs with 8 different themes (High Contrast, GitHub Classic, Neon, etc.).
+  * **Changes First:** Toggle to automatically shift the diff view to show the first change immediately.
 
 ---
 

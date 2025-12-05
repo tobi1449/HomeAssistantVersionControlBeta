@@ -286,23 +286,6 @@
             <div class="setting-item"
               style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
               <label style="margin-bottom: 0;">
-                <span style="color: var(--text-primary); font-size: 14px;" data-i18n="settings.diff_view">Diff
-                  View</span>
-              </label>
-              <div class="segmented-control">
-                <input type="radio" name="diffViewFormat" id="diffViewUnified" value="unified"
-                  onchange="toggleDiffViewFormat(false)">
-                <label for="diffViewUnified" data-i18n="settings.diff_view_unified">Unified</label>
-                <input type="radio" name="diffViewFormat" id="diffViewSplit" value="split" checked
-                  onchange="toggleDiffViewFormat(true)">
-                <label for="diffViewSplit" data-i18n="settings.diff_view_split">Side-by-Side</label>
-                <div class="segmented-control-slider"></div>
-              </div>
-            </div>
-
-            <div class="setting-item"
-              style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-              <label style="margin-bottom: 0;">
                 <span style="color: var(--text-primary); font-size: 14px;" data-i18n="settings.diff_style">Diff
                   Style</span>
               </label>
@@ -334,6 +317,23 @@
                 <option value="style-7" data-i18n="settings.diff_style_minimal">Minimal Border</option>
                 <option value="style-8" data-i18n="settings.diff_style_split">Split Highlight</option>
               </select>
+            </div>
+
+            <div class="setting-item"
+              style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <label style="margin-bottom: 0;">
+                <span style="color: var(--text-primary); font-size: 14px;" data-i18n="settings.diff_view">Diff
+                  View</span>
+              </label>
+              <div class="segmented-control">
+                <input type="radio" name="diffViewFormat" id="diffViewUnified" value="unified"
+                  onchange="toggleDiffViewFormat(false)">
+                <label for="diffViewUnified" data-i18n="settings.diff_view_unified">Unified</label>
+                <input type="radio" name="diffViewFormat" id="diffViewSplit" value="split" checked
+                  onchange="toggleDiffViewFormat(true)">
+                <label for="diffViewSplit" data-i18n="settings.diff_view_split">Side-by-Side</label>
+                <div class="segmented-control-slider"></div>
+              </div>
             </div>
 
             <div class="setting-item"

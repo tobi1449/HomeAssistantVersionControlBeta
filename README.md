@@ -16,7 +16,7 @@ Home Assistant Version Control provides complete version history for your setup.
 * **Zero-Effort Backups:** Every edit is saved automatically.
 * **Smart Debouncing:** Multiple rapid edits are grouped into a single save snapshot (customizable delay).
 * **Comprehensive Tracking:** Monitors `.yaml`, `.yml`, and `lovelace` dashboard files (both UI and YAML mode).
-* **Efficient Storage:** Uses Git deduplication to minimize disk usage. Typical grow expected less than 5MB per year.
+* **Efficient Storage:** Uses Git deduplication to minimize disk usage—only stores the differences between versions.
 
 ### Timeline & History
 * **Chronological Feed:** View changes grouped by "Today," "Yesterday," and "Earlier."

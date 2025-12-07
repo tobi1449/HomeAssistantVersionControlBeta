@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Home Assistant Version Control",
-    "subtitle": "Browse and restore backups—like magic.",
+    "subtitle": "Browse and restore backups like magic.",
     "loading": "Loading...",
     "error": "Error",
     "unknown_error": "Unknown error",

@@ -5335,18 +5335,18 @@ function toggleHolidayMode() {
     document.body.classList.add('holiday-mode');
     createSnowflakes();
     applyHolidayDesign();
-    localStorage.setItem('holidayMode', 'true');
+    localStorage.setItem('holidayModeEnabled', 'true');
   } else {
     document.body.classList.remove('holiday-mode');
     clearSnowflakes();
     hideHolidayDesignPanel();
-    localStorage.setItem('holidayMode', 'false');
+    localStorage.setItem('holidayModeEnabled', 'false');
   }
 }
 
 // Initialize Holiday Mode from localStorage
 function initHolidayMode() {
-  const saved = localStorage.getItem('holidayMode');
+  const saved = localStorage.getItem('holidayModeEnabled');
   const checkbox = document.getElementById('holidayMode');
 
   if (saved === 'true') {

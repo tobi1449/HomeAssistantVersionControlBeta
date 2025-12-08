@@ -11,6 +11,8 @@
 </head>
 
 <body class="dark-mode">
+  <!-- Snow Container for Holiday Mode -->
+  <div id="snowContainer" class="snow-container"></div>
   <div class="container">
     <div class="header">
       <div style="display: flex; align-items: center; gap: 14px;">
@@ -146,6 +148,25 @@
       <div class="modal-content">
         <div class="settings-section">
 
+          <!-- Holiday Mode Toggle -->
+          <div class="settings-group holiday-settings-group">
+            <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="color: var(--text-primary); font-size: 14px; display: flex; align-items: center; gap: 8px;"
+                  data-i18n="settings.holiday_mode">
+                  <span style="font-size: 16px;">🎄</span> Holiday Mode
+                </span>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;"
+                  data-i18n="settings.holiday_mode_desc">
+                  Transform the header into a festive gift with falling snow
+                </p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="holidayMode" style="display: none;">
+                <label for="holidayMode" class="toggle-slider" onclick="toggleHolidayMode()"></label>
+              </div>
+            </div>
+          </div>
 
           <!-- Group 2: General -->
           <div class="settings-group">

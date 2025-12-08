@@ -175,7 +175,9 @@
     "diff_style_neon": "Neon",
     "diff_style_pastel": "Pastel",
     "diff_style_minimal": "Minimal Border",
-    "diff_style_split": "Split Highlight"
+    "diff_style_split": "Split Highlight",
+    "holiday_mode": "🎄 Holiday Mode",
+    "holiday_mode_desc": "Transform the header into a festive gift with falling snow"
   },
   "date_buckets": {
     "today": "Today",

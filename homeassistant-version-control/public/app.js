@@ -298,6 +298,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   injectSelectedColorStyle();
   injectHoverStyles();
 
+  // Initialize Holiday Mode from localStorage
+  initHolidayMode();
+
   // Initialize the view
   switchMode(currentMode);
 });
@@ -5156,5 +5159,92 @@ function stepInput(id, step) {
       // Trigger change event if needed
       input.dispatchEvent(new Event('change'));
     }
+  }
+}
+
+// ========================================
+// HOLIDAY MODE FUNCTIONS
+// ========================================
+
+// Snowflake characters for variety
+const SNOWFLAKE_CHARS = ['❄', '❅', '❆', '✻', '✼', '❉'];
+
+// Number of snowflakes
+const SNOWFLAKE_COUNT = 28;
+
+// Toggle Holiday Mode
+function toggleHolidayMode() {
+  const checkbox = document.getElementById('holidayMode');
+  const isEnabled = checkbox.checked;
+
+  if (isEnabled) {
+    document.body.classList.add('holiday-mode');
+    createSnowflakes();
+    localStorage.setItem('holidayMode', 'true');
+  } else {
+    document.body.classList.remove('holiday-mode');
+    clearSnowflakes();
+    localStorage.setItem('holidayMode', 'false');
+  }
+}
+
+// Initialize Holiday Mode from localStorage
+function initHolidayMode() {
+  const saved = localStorage.getItem('holidayMode');
+  const checkbox = document.getElementById('holidayMode');
+
+  if (saved === 'true') {
+    checkbox.checked = true;
+    document.body.classList.add('holiday-mode');
+    createSnowflakes();
+  }
+}
+
+// Create snowflakes
+function createSnowflakes() {
+  const container = document.getElementById('snowContainer');
+  if (!container) return;
+
+  // Clear existing snowflakes first
+  container.innerHTML = '';
+
+  for (let i = 0; i < SNOWFLAKE_COUNT; i++) {
+    const snowflake = document.createElement('div');
+    snowflake.className = 'snowflake';
+
+    // Random snowflake character
+    snowflake.textContent = SNOWFLAKE_CHARS[Math.floor(Math.random() * SNOWFLAKE_CHARS.length)];
+
+    // Random horizontal position
+    snowflake.style.left = Math.random() * 100 + '%';
+
+    // Random size (small variation for graceful look)
+    const size = 8 + Math.random() * 8; // 8-16px
+    snowflake.style.fontSize = size + 'px';
+
+    // Random animation duration (slow, graceful: 10-18 seconds)
+    const duration = 10 + Math.random() * 8;
+    snowflake.style.animationDuration = duration + 's';
+
+    // Staggered animation delay (so they don't all start at once)
+    const delay = Math.random() * 15;
+    snowflake.style.animationDelay = delay + 's';
+
+    // Random animation type for variety
+    const animations = ['snowfall', 'snowfall-alt1', 'snowfall-alt2'];
+    snowflake.style.animationName = animations[Math.floor(Math.random() * animations.length)];
+
+    // Slight opacity variation
+    snowflake.style.opacity = 0.6 + Math.random() * 0.4;
+
+    container.appendChild(snowflake);
+  }
+}
+
+// Clear snowflakes
+function clearSnowflakes() {
+  const container = document.getElementById('snowContainer');
+  if (container) {
+    container.innerHTML = '';
   }
 }

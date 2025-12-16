@@ -562,7 +562,6 @@ body {
 
 /* === Deleted Items === */
 .file.deleted {
-  border-left: 3px solid var(--error, #ef4444);
   opacity: 0.85;
 }
 

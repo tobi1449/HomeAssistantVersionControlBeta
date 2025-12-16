@@ -2973,6 +2973,10 @@ function displayAutomationHistory() {
   // Show the floating button when viewing automation history
   showFloatingConfirmRestoreButton();
 
+  if (currentSelection && currentSelection.type === 'deleted_automation') {
+    document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreAutomationVersion('${escapeHtml(currentSelection.id)}')" title="${t('diff.tooltip_overwrite_automation')}">${t('timeline.restore_commit')}</button>`;
+  }
+
   // Load the initial version
   loadAutomationHistoryDiff();
 }
@@ -3326,6 +3330,10 @@ function displayScriptHistory() {
   // Show the floating button when viewing script history
   showFloatingConfirmRestoreButton();
 
+  if (currentSelection && currentSelection.type === 'deleted_script') {
+    document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreScriptVersion('${escapeHtml(currentSelection.id)}')" title="${t('diff.tooltip_overwrite_script')}">${t('timeline.restore_commit')}</button>`;
+  }
+
   // Load the initial version
   loadScriptHistoryDiff();
 }
@@ -3620,6 +3628,10 @@ function displayFileHistory(filePath) {
   document.getElementById('rightPanelTitle').textContent = title;
   // document.getElementById('itemsSubtitle').textContent = `History (${currentFileHistory.length} versions with changes)`;
   document.getElementById('rightPanelActions').innerHTML = '';
+  if (currentSelection && currentSelection.type === 'deleted_file') {
+    const latestParams = `('${escapeHtml(filePath)}', '${currentFileHistory[0].hash}')`;
+    document.getElementById('rightPanelActions').innerHTML = `<button class="btn restore" onclick="restoreFile${latestParams}" title="${t('diff.tooltip_restore_file')}">${t('timeline.restore_commit')}</button>`;
+  }
 
   // Build the HTML for the right panel with navigation
   const html = `
@@ -3857,7 +3869,12 @@ async function viewDiff(file, hash) {
 }
 
 async function restoreAutomationVersion(automationId) {
-  const auto = allAutomations.find(a => a.id === automationId);
+  let auto = allAutomations.find(a => a.id === automationId);
+
+  if (!auto && currentSelection && currentSelection.type === 'deleted_automation' && currentSelection.id === automationId) {
+    auto = { id: automationId, name: currentSelection.name || 'Deleted Automation' };
+  }
+
   if (!auto) {
     showNotification('Automation not found', 'error');
     return;
@@ -3891,7 +3908,12 @@ async function restoreAutomationVersion(automationId) {
 }
 
 async function restoreScriptVersion(scriptId) {
-  const script = allScripts.find(s => s.id === scriptId);
+  let script = allScripts.find(s => s.id === scriptId);
+
+  if (!script && currentSelection && currentSelection.type === 'deleted_script' && currentSelection.id === scriptId) {
+    script = { id: scriptId, name: currentSelection.name || 'Deleted Script' };
+  }
+
   if (!script) {
     showNotification('Script not found', 'error');
     return;

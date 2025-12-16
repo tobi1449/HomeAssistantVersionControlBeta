@@ -1250,7 +1250,8 @@ function updateCloudSyncStatus(settings) {
 // GitHub OAuth Device Flow
 // =====================================
 
-let githubPollInterval = null;
+
+let isGitHubPolling = false;
 
 async function connectGitHub() {
   try {
@@ -1258,6 +1259,8 @@ async function connectGitHub() {
     document.getElementById('githubNotConnected').style.display = 'none';
     document.getElementById('githubConnecting').style.display = 'block';
     document.getElementById('githubConnected').style.display = 'none';
+
+    console.log('[Frontend] Initiating GitHub Device Flow...');
 
     // Initiate device flow
     const response = await fetch(`${API}/github/device-flow/initiate`, {
@@ -1273,28 +1276,44 @@ async function connectGitHub() {
       return;
     }
 
+    console.log('[Frontend] Device flow initiated. User code:', data.user_code);
+
     // Show the user code
     document.getElementById('githubUserCode').textContent = data.user_code;
 
-    // Open GitHub in new tab
-    window.open(data.verification_uri, '_blank');
+    // Auto-copy to clipboard
+    try {
+      await navigator.clipboard.writeText(data.user_code);
+      showNotification('Code copied to clipboard! Paste it on GitHub.', 'success', 4000);
+    } catch (err) {
+      console.warn('Clipboard write failed:', err);
+      showNotification('Could not auto-copy code. Please copy it manually.', 'warning', 4000);
+    }
 
     // Start polling for token
-    const pollInterval = (data.interval || 5) * 1000; // GitHub specifies interval in seconds
-    let attempts = 0;
+    isGitHubPolling = true;
+    const pollIntervalMs = (data.interval || 5) * 1000;
     const maxAttempts = Math.ceil(data.expires_in / (data.interval || 5));
+    let attempts = 0;
 
-    githubPollInterval = setInterval(async () => {
+    console.log(`[Frontend] Starting poll loop. Interval: ${pollIntervalMs}ms`);
+
+    const pollForToken = async () => {
+      if (!isGitHubPolling) {
+        console.log('[Frontend] Polling stopped by user or timeout.');
+        return;
+      }
+
       attempts++;
-
       if (attempts > maxAttempts) {
-        clearInterval(githubPollInterval);
+        console.log('[Frontend] Polling timed out.');
         showNotification('Authorization timed out', 'error', 5000);
         cancelGitHubConnect();
         return;
       }
 
       try {
+        // console.log(`[Frontend] Polling attempt ${attempts}...`);
         const pollResponse = await fetch(`${API}/github/device-flow/poll`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1304,36 +1323,55 @@ async function connectGitHub() {
         const pollData = await pollResponse.json();
 
         if (pollData.success) {
-          // Got the token!
-          clearInterval(githubPollInterval);
+          console.log('[Frontend] Token received!');
+          isGitHubPolling = false;
           showNotification('GitHub connected! Creating repository...', 'success', 3000);
 
           // Create the repository automatically
           await createGitHubRepo();
-
           await loadGitHubUser();
           return;
         }
 
         if (pollData.expired) {
-          clearInterval(githubPollInterval);
+          console.log('[Frontend] Code expired.');
+          isGitHubPolling = false;
           showNotification('Code expired. Please try again.', 'error', 5000);
           cancelGitHubConnect();
           return;
         }
 
         if (pollData.denied) {
-          clearInterval(githubPollInterval);
+          console.log('[Frontend] Access denied.');
+          isGitHubPolling = false;
           showNotification('Access denied', 'error', 5000);
           cancelGitHubConnect();
           return;
         }
 
-        // Still pending - continue polling
+        if (pollData.pending || pollData.slow_down) {
+          // Expected states, continue polling
+          const nextInterval = pollData.slow_down ? (pollIntervalMs + 5000) : pollIntervalMs;
+          setTimeout(pollForToken, nextInterval);
+        } else {
+          // Unknown error? retry anyway?
+          console.warn('[Frontend] Unknown poll state:', pollData);
+          setTimeout(pollForToken, pollIntervalMs);
+        }
+
       } catch (error) {
-        console.error('Poll error:', error);
+        console.error('[Frontend] Poll fetch error:', error);
+        // Retry on network error
+        setTimeout(pollForToken, pollIntervalMs);
       }
-    }, pollInterval);
+    };
+
+    // Start the loop
+    setTimeout(pollForToken, pollIntervalMs);
+
+    // Open GitHub in new tab LAST to avoid blocking
+    console.log('[Frontend] Opening GitHub URL...');
+    window.open(data.verification_uri, '_blank');
 
   } catch (error) {
     console.error('GitHub connect error:', error);
@@ -1343,10 +1381,8 @@ async function connectGitHub() {
 }
 
 function cancelGitHubConnect() {
-  if (githubPollInterval) {
-    clearInterval(githubPollInterval);
-    githubPollInterval = null;
-  }
+  isGitHubPolling = false;
+  console.log('[Frontend] Cancelling GitHub connect.');
 
   document.getElementById('githubNotConnected').style.display = 'block';
   document.getElementById('githubConnecting').style.display = 'none';

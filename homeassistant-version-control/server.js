@@ -3069,7 +3069,8 @@ app.post('/api/github/device-flow/poll', async (req, res) => {
     const data = await response.json();
 
     if (data.error) {
-      // These are expected states during polling
+      // console.log('[github device flow] Poll status:', data.error); 
+
       if (data.error === 'authorization_pending') {
         return res.json({ success: false, pending: true, error: 'Authorization pending' });
       }
@@ -3083,7 +3084,7 @@ app.post('/api/github/device-flow/poll', async (req, res) => {
         return res.json({ success: false, denied: true, error: 'Access denied by user' });
       }
 
-      console.error('[github device flow] Poll error:', data.error_description);
+      console.error('[github device flow] Poll error response:', data);
       return res.status(400).json({ success: false, error: data.error_description || data.error });
     }
 

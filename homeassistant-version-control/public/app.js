@@ -2192,6 +2192,10 @@ let currentFileHistoryIndex = 0; // Current position in history
 let isScanningHistory = false; // Flag to track if we are currently scanning history
 
 async function loadScripts() {
+  if (sortState.scripts === 'deleted') {
+    return loadDeletedScripts();
+  }
+
   const leftPanel = document.getElementById('leftPanel');
   leftPanel.innerHTML = `<div class="empty" data-i18n="app.loading">Loading...</div>`;
 
@@ -2212,6 +2216,10 @@ async function loadScripts() {
 }
 
 async function loadAutomations() {
+  if (sortState.automations === 'deleted') {
+    return loadDeletedAutomations();
+  }
+
   const leftPanel = document.getElementById('leftPanel');
   leftPanel.innerHTML = `<div class="empty" data-i18n="app.loading">Loading...</div>`;
 
@@ -2232,6 +2240,10 @@ async function loadAutomations() {
 }
 
 async function loadFiles() {
+  if (sortState.files === 'deleted') {
+    return loadDeletedFiles();
+  }
+
   const leftPanel = document.getElementById('leftPanel');
   leftPanel.innerHTML = `<div class="empty" data-i18n="app.loading">Loading...</div>`;
 

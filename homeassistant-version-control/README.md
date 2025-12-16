@@ -10,6 +10,11 @@ Home Assistant Version Control provides complete version history for your setup.
 
 ---
 
+## What's New
+* **Recover Deleted Items:** You can now view and restore files, automations, and scripts that have been deleted. Look for the "Deleted" option in the sort menu.
+
+---
+
 ##  Key Features
 
 ###  Automatic & Smart Tracking

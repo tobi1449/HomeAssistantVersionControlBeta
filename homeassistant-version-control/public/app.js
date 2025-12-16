@@ -1754,20 +1754,9 @@ async function displayCommits(commits) {
 
   document.getElementById('leftPanel').innerHTML = html;
 
-  // Auto-select the first commit if nothing is selected (or if the selected one is filtered out)
-  if (filteredCommits.length > 0) {
-    let commitToSelect = filteredCommits[0].hash;
-
-    // If we have a current selection that is still visible in the filtered list, keep it
-    if (currentSelection && currentSelection.type === 'commit' && filteredCommits.some(c => c.hash === currentSelection.hash)) {
-      commitToSelect = currentSelection.hash;
-    }
-
-    showCommit(commitToSelect);
-  } else {
-    document.getElementById('rightPanel').innerHTML = `<div class="empty">${t('timeline.select_commit')}</div>`;
-    document.getElementById('rightPanelActions').innerHTML = '';
-  }
+  // Show placeholder message - don't auto-select (matches Files/Automations/Scripts tabs behavior)
+  document.getElementById('rightPanel').innerHTML = `<div class="empty">${t('timeline.select_commit')}</div>`;
+  document.getElementById('rightPanelActions').innerHTML = '';
 
   // Update keyboard navigation
   const commitItems = Array.from(document.querySelectorAll('.commit'));

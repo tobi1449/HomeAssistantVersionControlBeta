@@ -486,6 +486,9 @@ body {
   color: var(--text-tertiary);
   font-size: 13px;
   font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* === Files === */

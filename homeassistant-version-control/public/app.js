@@ -1748,7 +1748,7 @@ async function displayCommits(commits) {
         html += `
               <div class="commit" onclick="showCommit('${commit.hash}')" id="commit-${commit.hash}">
                 <div class="commit-time">${timeString}</div>
-                <div class="commit-file">${fileName}</div>
+                <div class="commit-file" title="${fileName}">${fileName}</div>
               </div>
             `;
       }

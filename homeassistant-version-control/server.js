@@ -325,7 +325,7 @@ let configOptions = {
 };
 
 // Runtime settings loaded from file
-const runtimeSettings = {
+let runtimeSettings = {
   debounceTime: 300,
   debounceTimeUnit: 'seconds',
   historyRetention: true,
@@ -605,6 +605,9 @@ async function findNestedGitRepos() {
 
 
 async function initRepo() {
+  // Load runtime settings first
+  await loadRuntimeSettings();
+
   try {
     // Determine CONFIG_PATH
     CONFIG_PATH = process.env.CONFIG_PATH;

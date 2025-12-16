@@ -520,6 +520,8 @@ export async function getAutomationHistory(automationId, configPath) {
       return { success: false, history: [], debugMessages };
     }
 
+    let candidate = null;
+
     for (const commit of log.all) {
       try {
         debugMessages.push(`[getAutomationHistory] Checking commit: ${commit.hash.substring(0, 7)} - ${commit.message}`);
@@ -527,9 +529,8 @@ export async function getAutomationHistory(automationId, configPath) {
 
         const data = yaml.load(content);
 
+        let auto = null;
         if (data) {
-          let auto = null;
-
           // Helper to find by ID or Key/Index
           const findAutomation = (collection, isArray) => {
             if (isArray) {
@@ -567,36 +568,61 @@ export async function getAutomationHistory(automationId, configPath) {
             }
             debugMessages.push(`[getAutomationHistory] Root lookup for ${identifier}: ${!!auto}`);
           }
-
-          if (auto) {
-            // Compare with the previous commit's automation to avoid duplicates (deduplication)
-            const prevCommit = commits[commits.length - 1];
-
-            // Allow if it's the first one found (most recent) OR if content changed
-            const contentChanged = !prevCommit || JSON.stringify(prevCommit.automation) !== JSON.stringify(auto);
-
-            if (contentChanged) {
-              commits.push({
-                hash: commit.hash,
-                date: commit.date,
-                message: commit.message,
-                author: commit.author_name,
-                automation: auto
-              });
-              debugMessages.push(`[getAutomationHistory] Automation found in commit ${commit.hash.substring(0, 7)} (content changed)`);
-            } else {
-              debugMessages.push(`[getAutomationHistory] Automation found in commit ${commit.hash.substring(0, 7)} but content unchanged - skipping`);
-            }
-          } else {
-            debugMessages.push(`[getAutomationHistory] Automation NOT found in commit ${commit.hash.substring(0, 7)} with identifier ${identifier}`);
-          }
         } else {
           debugMessages.push(`[getAutomationHistory] No YAML data parsed from file at commit ${commit.hash.substring(0, 7)}`);
         }
+
+        if (auto) {
+          const currentCommitObj = {
+            hash: commit.hash,
+            date: commit.date,
+            message: commit.message,
+            author: commit.author_name,
+            automation: auto
+          };
+
+          if (!candidate) {
+            // First relevant commit encountered (newest)
+            candidate = currentCommitObj;
+          } else {
+            if (JSON.stringify(candidate.automation) === JSON.stringify(auto)) {
+              // Same content, found an older version. Update candidate to older.
+              // usage: older commit is better represents "when this state started"
+              candidate = currentCommitObj;
+              debugMessages.push(`[getAutomationHistory] Same content found in older commit ${commit.hash.substring(0, 7)}. Updating candidate.`);
+            } else {
+              // Content changed. The PREVIOUS candidate was the start of the newer block.
+              commits.push(candidate);
+              debugMessages.push(`[getAutomationHistory] Content changed in commit ${commit.hash.substring(0, 7)}. Pushing previous candidate.`);
+              candidate = currentCommitObj;
+            }
+          }
+        } else {
+          // Automation missing in this commit.
+          // If we had a candidate, it means the automation was CREATED at the candidate commit.
+          if (candidate) {
+            commits.push(candidate);
+            candidate = null;
+            debugMessages.push(`[getAutomationHistory] Automation missing in commit ${commit.hash.substring(0, 7)}. Last candidate was creation point.`);
+          }
+        }
+
       } catch (error) {
         debugMessages.push(`[getAutomationHistory] Error processing commit ${commit.hash.substring(0, 7)} for file ${gitFilePath}: ${error.message}`);
+        // If error (e.g. file didn't exist), treat as missing? 
+        // Safer to just ignore and keep candidate if we suspect transient error, but generally gitShowFileAtCommit throws if file missing.
+        if (candidate) {
+          commits.push(candidate);
+          candidate = null;
+        }
       }
     }
+
+    if (candidate) {
+      commits.push(candidate);
+      debugMessages.push(`[getAutomationHistory] Pushing final candidate (oldest).`);
+    }
+
     debugMessages.push(`[getAutomationHistory] Total automations found in history: ${commits.length}`);
   } catch (error) {
     debugMessages.push(`[getAutomationHistory] Critical error getting automation history: ${error.message}`);
@@ -644,6 +670,8 @@ export async function getScriptHistory(scriptId, configPath) {
       return { success: false, history: [], debugMessages };
     }
 
+    let candidate = null;
+
     for (const commit of log.all) {
       try {
         debugMessages.push(`[getScriptHistory] Checking commit: ${commit.hash.substring(0, 7)} - ${commit.message}`);
@@ -651,9 +679,8 @@ export async function getScriptHistory(scriptId, configPath) {
 
         const data = yaml.load(content);
 
+        let script = null;
         if (data) {
-          let script = null;
-
           // Helper to find by ID or Key/Index
           const findScript = (collection, isArray) => {
             if (isArray) {
@@ -688,36 +715,57 @@ export async function getScriptHistory(scriptId, configPath) {
               script = findScript(data, false);
             }
           }
-
-          if (script) {
-            // Compare with the previous commit's script to avoid duplicates
-            const prevCommit = commits[commits.length - 1];
-            const contentChanged = !prevCommit || JSON.stringify(prevCommit.script) !== JSON.stringify(script);
-
-            if (contentChanged) {
-              commits.push({
-                hash: commit.hash,
-                date: commit.date,
-                message: commit.message,
-                author: commit.author_name,
-                script: script
-              });
-              debugMessages.push(`[getScriptHistory] Script found in commit ${commit.hash.substring(0, 7)} (content changed)`);
-            } else {
-              debugMessages.push(`[getScriptHistory] Script found in commit ${commit.hash.substring(0, 7)} but content unchanged - skipping`);
-            }
-          } else {
-            debugMessages.push(`[getScriptHistory] Script NOT found in commit ${commit.hash.substring(0, 7)} with identifier ${identifier}`);
-          }
         } else {
           debugMessages.push(`[getScriptHistory] No YAML data parsed from file at commit ${commit.hash.substring(0, 7)}`);
+        }
+
+        if (script) {
+          const currentCommitObj = {
+            hash: commit.hash,
+            date: commit.date,
+            message: commit.message,
+            author: commit.author_name,
+            script: script
+          };
+
+          if (!candidate) {
+            candidate = currentCommitObj;
+          } else {
+            if (JSON.stringify(candidate.script) === JSON.stringify(script)) {
+              // Same content, update candidate to older commit
+              candidate = currentCommitObj;
+              debugMessages.push(`[getScriptHistory] Same content found in older commit ${commit.hash.substring(0, 7)}. Updating candidate.`);
+            } else {
+              // Content changed
+              commits.push(candidate);
+              debugMessages.push(`[getScriptHistory] Content changed in commit ${commit.hash.substring(0, 7)}. Pushing previous candidate.`);
+              candidate = currentCommitObj;
+            }
+          }
+        } else {
+          // Script missing
+          if (candidate) {
+            commits.push(candidate);
+            candidate = null;
+            debugMessages.push(`[getScriptHistory] Script missing in commit ${commit.hash.substring(0, 7)}. Last candidate was creation point.`);
+          }
+          debugMessages.push(`[getScriptHistory] Script NOT found in commit ${commit.hash.substring(0, 7)} with identifier ${identifier}`);
         }
       }
       catch (error) {
         debugMessages.push(`[getScriptHistory] Error processing commit ${commit.hash.substring(0, 7)} for file ${gitFilePath}: ${error.message}`);
-        // Script might not exist in this commit
+        if (candidate) {
+          commits.push(candidate);
+          candidate = null;
+        }
       }
     }
+
+    if (candidate) {
+      commits.push(candidate);
+      debugMessages.push(`[getScriptHistory] Pushing final candidate (oldest).`);
+    }
+
     debugMessages.push(`[getScriptHistory] Total scripts found in history: ${commits.length}`);
   }
   catch (error) {

@@ -2276,6 +2276,7 @@ async function loadDeletedFiles() {
     const data = await response.json();
 
     if (data.success) {
+      data.files.sort((a, b) => new Date(b.lastSeenDate) - new Date(a.lastSeenDate));
       displayDeletedFiles(data.files);
     } else {
       leftPanel.innerHTML = `<div class="error" data-i18n="files.error_loading">Error loading deleted files: ${data.error}</div>`;
@@ -2328,6 +2329,7 @@ async function loadDeletedAutomations() {
     const data = await response.json();
 
     if (data.success) {
+      data.automations.sort((a, b) => new Date(b.lastSeenDate) - new Date(a.lastSeenDate));
       displayDeletedAutomations(data.automations);
     } else {
       leftPanel.innerHTML = `<div class="error" data-i18n="automations.error_loading">Error loading deleted automations: ${data.error}</div>`;
@@ -2381,6 +2383,7 @@ async function loadDeletedScripts() {
     const data = await response.json();
 
     if (data.success) {
+      data.scripts.sort((a, b) => new Date(b.lastSeenDate) - new Date(a.lastSeenDate));
       displayDeletedScripts(data.scripts);
     } else {
       leftPanel.innerHTML = `<div class="error" data-i18n="scripts.error_loading">Error loading deleted scripts: ${data.error}</div>`;

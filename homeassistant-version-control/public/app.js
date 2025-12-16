@@ -2349,8 +2349,8 @@ function displayDeletedAutomations(automations) {
     const lastSeen = new Date(auto.lastSeenDate).toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric'
     });
-    // Create a synthetic ID for fetching history (using the file and identifier format)
-    const syntheticId = `automations:${encodeURIComponent(auto.file)}:${auto.id}`;
+    // Use the existing full ID from the API
+    const syntheticId = auto.id;
     const autoId = 'deleted-auto-' + auto.id.replace(/[:/\.]/g, '-');
     return `
       <div class="file deleted" id="${autoId}" onclick="selectDeletedAutomation('${escapeHtml(syntheticId)}', '${escapeHtml(auto.name)}')">
@@ -2402,8 +2402,8 @@ function displayDeletedScripts(scripts) {
     const lastSeen = new Date(script.lastSeenDate).toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric'
     });
-    // Create a synthetic ID for fetching history
-    const syntheticId = `scripts:${encodeURIComponent(script.file)}:${script.id}`;
+    // Use the existing full ID from the API
+    const syntheticId = script.id;
     const scriptItemId = 'deleted-script-' + script.id.replace(/[:/\.]/g, '-');
     return `
       <div class="file deleted" id="${scriptItemId}" onclick="selectDeletedScript('${escapeHtml(syntheticId)}', '${escapeHtml(script.name)}')">
@@ -2786,7 +2786,9 @@ async function showAutomationHistory(automationId) {
     }
   }
 
-  currentSelection = { type: 'automation', id: automationId };
+  if (sortState.automations !== 'deleted') {
+    currentSelection = { type: 'automation', id: automationId };
+  }
 
   try {
     const response = await fetch(`${API}/automation/${encodeURIComponent(automationId)}/history`);
@@ -3146,7 +3148,9 @@ async function showScriptHistory(scriptId) {
     }
   }
 
-  currentSelection = { type: 'script', id: scriptId };
+  if (sortState.scripts !== 'deleted') {
+    currentSelection = { type: 'script', id: scriptId };
+  }
 
   try {
     const response = await fetch(`${API}/script/${encodeURIComponent(scriptId)}/history`);

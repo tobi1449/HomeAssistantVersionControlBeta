@@ -3114,7 +3114,7 @@ async function testRemoteConnection() {
 // GitHub OAuth Device Flow
 // =====================================
 
-const GITHUB_CLIENT_ID = 'Ov23liWFHGMcCmLWFseP';
+const GITHUB_CLIENT_ID = '178c6fc778ccc68e1d6a'; // Using GitHub CLI Client ID as fallback due to app restrictions
 
 // Initiate GitHub Device Flow
 app.post('/api/github/device-flow/initiate', async (req, res) => {

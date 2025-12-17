@@ -2987,30 +2987,97 @@ async function configureSecretsTracking(include) {
  * @returns {Object} Result with success status
  */
 async function pushToRemote(includeSecrets = false) {
-  try {
-    // Ensure secrets configuration is correct before pushing
-    await configureSecretsTracking(includeSecrets);
+  const tempBranch = 'cloud-sync-temp';
+  const secretsPath = 'secrets.yaml';
 
-    // Get current branch
-    let branchName = 'main';
+  try {
+    // Get current branch to return to later
+    let originalBranch = 'main';
     try {
       const branchResult = await gitRevparse(['--abbrev-ref', 'HEAD']);
-      branchName = branchResult.trim() || 'main';
+      originalBranch = branchResult.trim() || 'main';
     } catch (e) {
       console.log('[cloud-sync] Could not determine branch, using main');
     }
 
-    // Force push to remote
-    await gitExec(['push', '-f', 'origin', branchName]);
-    console.log(`[cloud-sync] Successfully pushed to origin/${branchName}`);
+    // Stash any uncommitted changes first
+    let hadStash = false;
+    try {
+      const stashResult = await gitExec(['stash', 'push', '-m', 'cloud-sync-temp']);
+      hadStash = !stashResult.includes('No local changes');
+    } catch (e) {
+      // No changes to stash
+    }
 
-    // Update status
-    runtimeSettings.cloudSync.lastPushTime = new Date().toISOString();
-    runtimeSettings.cloudSync.lastPushStatus = 'success';
-    runtimeSettings.cloudSync.lastPushError = null;
-    await saveRuntimeSettings();
+    try {
+      // Create orphan branch for clean push (no history with secrets)
+      console.log('[cloud-sync] Creating clean orphan branch for push...');
 
-    return { success: true, branch: branchName };
+      // Delete temp branch if it exists
+      try {
+        await gitExec(['branch', '-D', tempBranch]);
+      } catch (e) {
+        // Branch didn't exist
+      }
+
+      // Create orphan branch (no parents = no history)
+      await gitExec(['checkout', '--orphan', tempBranch]);
+
+      // Stage files for commit
+      if (!includeSecrets) {
+        // First add everything
+        console.log('[cloud-sync] Adding all files...');
+        await gitExec(['add', '--all']);
+
+        // Then explicitly remove secrets.yaml from the index (keeps file on disk)
+        console.log('[cloud-sync] Removing secrets.yaml from staging...');
+        try {
+          await gitExec(['rm', '--cached', '--ignore-unmatch', 'secrets.yaml']);
+          console.log('[cloud-sync] Successfully excluded secrets.yaml');
+        } catch (e) {
+          console.log('[cloud-sync] Note: secrets.yaml exclusion returned:', e.message);
+        }
+      } else {
+        // Include everything
+        await gitExec(['add', '--all']);
+        console.log('[cloud-sync] All files staged (including secrets.yaml)');
+      }
+
+      // Create the clean commit
+      const timestamp = new Date().toISOString();
+      await gitExec(['commit', '-m', `Home Assistant backup - ${timestamp}`]);
+      console.log('[cloud-sync] Created clean commit for push');
+
+      // Force push to remote
+      await gitExec(['push', '-f', 'origin', `${tempBranch}:main`]);
+      console.log('[cloud-sync] Successfully pushed to origin/main');
+
+      // Update status
+      runtimeSettings.cloudSync.lastPushTime = timestamp;
+      runtimeSettings.cloudSync.lastPushStatus = 'success';
+      runtimeSettings.cloudSync.lastPushError = null;
+      await saveRuntimeSettings();
+
+      return { success: true, branch: 'main' };
+
+    } finally {
+      // Always return to original branch and clean up
+      try {
+        await gitExec(['checkout', '-f', originalBranch]);
+        await gitExec(['branch', '-D', tempBranch]);
+      } catch (e) {
+        console.error('[cloud-sync] Error cleaning up temp branch:', e);
+      }
+
+      // Restore stashed changes if any
+      if (hadStash) {
+        try {
+          await gitExec(['stash', 'pop']);
+        } catch (e) {
+          console.error('[cloud-sync] Error restoring stash:', e);
+        }
+      }
+    }
 
   } catch (error) {
     console.error('[cloud-sync] Push failed:', error);
@@ -3022,7 +3089,6 @@ async function pushToRemote(includeSecrets = false) {
     await saveRuntimeSettings();
 
     return { success: false, error: error.message };
-
   }
 }
 

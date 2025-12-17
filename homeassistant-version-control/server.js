@@ -2991,19 +2991,21 @@ async function pushToRemote(includeSecrets = false) {
     // Configure secrets tracking before pushing
     await configureSecretsTracking(includeSecrets);
 
-    // Get current branch
-    let branchName = 'main';
+    // Get current local branch
+    let localBranch = 'main';
     try {
       const branchResult = await gitRevparse(['--abbrev-ref', 'HEAD']);
-      branchName = branchResult.trim() || 'main';
+      localBranch = branchResult.trim() || 'main';
     } catch (e) {
       console.log('[cloud-sync] Could not determine branch, using main');
     }
 
-    // Normal push (preserves history)
-    console.log(`[cloud-sync] Pushing to origin/${branchName}...`);
-    await gitExec(['push', '-u', 'origin', branchName]);
-    console.log(`[cloud-sync] Successfully pushed to origin/${branchName}`);
+    // Always push to 'main' on remote (standard default branch)
+    const remoteBranch = 'main';
+    console.log(`[cloud-sync] Pushing ${localBranch} to origin/${remoteBranch}...`);
+    const pushOutput = await gitExec(['push', '-f', '-u', 'origin', `${localBranch}:${remoteBranch}`]);
+    console.log(`[cloud-sync] Push output:`, pushOutput);
+    console.log(`[cloud-sync] Successfully pushed to origin/${remoteBranch}`);
 
     // Update status
     const timestamp = new Date().toISOString();
@@ -3012,7 +3014,7 @@ async function pushToRemote(includeSecrets = false) {
     runtimeSettings.cloudSync.lastPushError = null;
     await saveRuntimeSettings();
 
-    return { success: true, branch: branchName };
+    return { success: true, branch: remoteBranch };
 
   } catch (error) {
     console.error('[cloud-sync] Push failed:', error);

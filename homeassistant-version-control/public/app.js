@@ -1258,42 +1258,32 @@ async function testCloudConnection() {
 }
 
 async function pushToCloudNow() {
-  console.log('[pushToCloudNow] Starting...');
   showNotification('Pushing to cloud...', 'info', 2000);
 
   // Save current settings first
-  console.log('[pushToCloudNow] Calling saveCloudSyncSettings...');
   const saveSuccess = await saveCloudSyncSettings();
-  console.log('[pushToCloudNow] saveCloudSyncSettings returned:', saveSuccess);
 
   if (saveSuccess === false) {
-    console.log('[pushToCloudNow] Save failed, aborting push');
     return;
   }
 
-  console.log('[pushToCloudNow] Proceeding to push...');
   try {
-    const pushUrl = `${API}/cloud-sync/push`;
-    console.log('[pushToCloudNow] Fetching:', pushUrl);
-    const response = await fetch(pushUrl, {
+    const response = await fetch(`${API}/cloud-sync/push`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force: true }) // Allow push even if not enabled
+      body: JSON.stringify({ force: true })
     });
 
-    console.log('[pushToCloudNow] Response status:', response.status);
     const data = await response.json();
-    console.log('[pushToCloudNow] Response data:', data);
 
     if (data.success) {
       showNotification('Push successful!', 'success', 3000);
-      // Refresh status
       loadCloudSyncSettings();
     } else {
       showNotification(`Push failed: ${data.error}`, 'error', 5000);
     }
   } catch (error) {
-    console.error('[pushToCloudNow] Error:', error);
+    console.error('Push error:', error);
     showNotification(`Push error: ${error.message}`, 'error', 5000);
   }
 }

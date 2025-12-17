@@ -1514,23 +1514,38 @@ async function loadGitHubUser() {
       document.getElementById('githubConnecting').style.display = 'none';
       document.getElementById('githubConnected').style.display = 'block';
 
-      // Hide "A private repository will be created automatically" since we're already connected
-      const repoDesc = document.getElementById('cloudRepoNameDesc');
-      if (repoDesc) repoDesc.style.display = 'none';
+      // Hide the entire repo name section since we're already connected
+      const repoNameSection = document.getElementById('repoNameSection');
+      if (repoNameSection) repoNameSection.style.display = 'none';
 
       document.getElementById('githubAvatar').src = data.user.avatar_url;
       document.getElementById('githubUsername').textContent = data.user.name || data.user.login;
+
+      // Populate the repo link from the remoteUrl
+      const repoLink = document.getElementById('githubRepoLink');
+      const remoteUrl = document.getElementById('cloudRemoteUrl')?.value;
+      if (repoLink && remoteUrl) {
+        // Convert git URL to browser URL (remove .git suffix if present)
+        const browserUrl = remoteUrl.replace(/\.git$/, '');
+        repoLink.href = browserUrl;
+        // Show just the path part (e.g., "github.com/user/repo")
+        repoLink.textContent = browserUrl.replace(/^https?:\/\//, '');
+      }
     } else {
-      // Not connected
+      // Not connected - show repo name section
       document.getElementById('githubNotConnected').style.display = 'block';
       document.getElementById('githubConnecting').style.display = 'none';
       document.getElementById('githubConnected').style.display = 'none';
+      const repoNameSection = document.getElementById('repoNameSection');
+      if (repoNameSection) repoNameSection.style.display = 'block';
     }
   } catch (error) {
     console.error('Failed to load GitHub user:', error);
     document.getElementById('githubNotConnected').style.display = 'block';
     document.getElementById('githubConnecting').style.display = 'none';
     document.getElementById('githubConnected').style.display = 'none';
+    const repoNameSection = document.getElementById('repoNameSection');
+    if (repoNameSection) repoNameSection.style.display = 'block';
   }
 }
 
@@ -1548,6 +1563,9 @@ async function disconnectGitHub() {
       document.getElementById('githubNotConnected').style.display = 'block';
       document.getElementById('githubConnecting').style.display = 'none';
       document.getElementById('githubConnected').style.display = 'none';
+      // Show repo name section again
+      const repoNameSection = document.getElementById('repoNameSection');
+      if (repoNameSection) repoNameSection.style.display = 'block';
     }
   } catch (error) {
     console.error('Disconnect error:', error);

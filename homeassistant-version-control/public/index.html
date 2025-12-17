@@ -417,7 +417,7 @@
               <!-- GitHub Configuration Section -->
               <div id="githubConfigSection">
                 <!-- Repository Name -->
-                <div style="margin-bottom: 16px;">
+                <div id="repoNameSection" style="margin-bottom: 16px;">
                   <label style="display: block; margin-bottom: 8px;">
                     <span style="color: var(--text-primary); font-size: 14px;"
                       data-i18n="settings.cloud_repo_name">Repository Name</span>
@@ -502,6 +502,11 @@
                         style="background: var(--danger); padding: 2px 8px; font-size: 11px; margin-left: 8px;"
                         data-i18n="settings.cloud_disconnect">Disconnect</button>
                     </div>
+                    <a id="githubRepoLink" href="#" target="_blank"
+                      style="display: block; margin-top: 8px; color: var(--text-secondary); font-size: 12px; text-decoration: none;"
+                      onmouseover="this.style.color='var(--accent-blue)'"
+                      onmouseout="this.style.color='var(--text-secondary)'">
+                    </a>
                   </div>
                 </div>
               </div>

@@ -120,7 +120,7 @@ docker run -d \
   -e SUPERVISOR_TOKEN=your_long_lived_access_token_here \
   -e HA_URL=http://homeassistant.local:8123 \
   --name home-assistant-version-control \
-  ghcr.io/saihgupr/ha-version-control:latest
+  ghcr.io/diggingfordinos/ha-version-control:latest
 ```
 
 Replace `/path/to/your/config` with the actual path to your Home Assistant configuration directory.

@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "slug": "home-assistant-version-control-beta",
   "description": "Git-powered version control and automated backup for your Home Assistant configuration files",
-  "url": "https://github.com/saihgupr/HomeAssistantVersionControlBeta",
+  "url": "https://github.com/diggingfordinos/HomeAssistantVersionControlBeta",
   "startup": "application",
   "boot": "auto",
   "arch": [

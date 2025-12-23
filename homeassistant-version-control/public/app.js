@@ -1552,17 +1552,17 @@ async function loadGitHubUser() {
       if (repoNameSection) repoNameSection.style.display = 'none';
 
       document.getElementById('githubAvatar').src = data.user.avatar_url;
-      document.getElementById('githubUsername').textContent = data.user.name || data.user.login;
 
-      // Populate the repo link from the remoteUrl
+      // Populate the repo link with repo name from the remoteUrl
       const repoLink = document.getElementById('githubRepoLink');
       const remoteUrl = document.getElementById('cloudRemoteUrl')?.value;
       if (repoLink && remoteUrl) {
         // Convert git URL to browser URL (remove .git suffix if present)
         const browserUrl = remoteUrl.replace(/\.git$/, '');
         repoLink.href = browserUrl;
-        // Show just the path part (e.g., "github.com/user/repo")
-        repoLink.textContent = browserUrl.replace(/^https?:\/\//, '');
+        // Extract just the repo name (last part of URL path)
+        const repoName = browserUrl.split('/').pop() || 'Repository';
+        repoLink.textContent = repoName;
       }
     } else {
       // Not connected - show repo name section
@@ -1619,7 +1619,12 @@ async function createGitHubRepo() {
     const data = await response.json();
 
     if (data.success) {
-      showNotification(`Repository "${data.repo.name}" created!`, 'success', 3000);
+      // Show different message for new vs existing repo
+      if (data.existing) {
+        showNotification(`Using existing repository "${data.repo.name}"`, 'success', 3000);
+      } else {
+        showNotification(`Repository "${data.repo.name}" created!`, 'success', 3000);
+      }
 
       // Update the hidden remote URL field
       const urlField = document.getElementById('cloudRemoteUrl');
@@ -1629,11 +1634,6 @@ async function createGitHubRepo() {
 
       return data.repo;
     } else {
-      // Check if repo already exists
-      if (data.error && data.error.includes('already exists')) {
-        showNotification('Repository already exists. Using existing repo.', 'info', 3000);
-        return null;
-      }
       showNotification(`Failed to create repo: ${data.error}`, 'error', 5000);
       return null;
     }

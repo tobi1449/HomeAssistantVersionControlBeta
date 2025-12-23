@@ -2668,7 +2668,7 @@ const server = app.listen(PORT, HOST, (err) => {
   }
 
   console.log('='.repeat(60));
-  console.log('Home Assistant Version Control v1.0.3');
+  console.log('Home Assistant Version Control v1.0.2');
   console.log('='.repeat(60));
   console.log(`Server running at http://${HOST}:${PORT}`);
 
@@ -3324,7 +3324,64 @@ app.post('/api/github/create-repo', async (req, res) => {
 
     const data = await response.json();
 
+    // Check if repo already exists - if so, fetch and use it
     if (!response.ok) {
+      const alreadyExists = data.errors?.some(e => e.message?.includes('already exists')) ||
+        data.message?.includes('already exists');
+
+      if (alreadyExists) {
+        console.log('[github create-repo] Repository already exists, fetching existing repo...');
+
+        // Get the authenticated user to build the repo URL
+        const userResponse = await fetch('https://api.github.com/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'HomeAssistantVersionControl'
+          }
+        });
+
+        if (!userResponse.ok) {
+          return res.status(500).json({ success: false, error: 'Failed to get user info' });
+        }
+
+        const userData = await userResponse.json();
+
+        // Fetch the existing repo
+        const repoResponse = await fetch(`https://api.github.com/repos/${userData.login}/${repoName}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'HomeAssistantVersionControl'
+          }
+        });
+
+        if (!repoResponse.ok) {
+          return res.status(500).json({ success: false, error: 'Repository exists but could not be accessed' });
+        }
+
+        const repoData = await repoResponse.json();
+        console.log('[github create-repo] Using existing repository:', repoData.clone_url);
+
+        // Save the remote URL
+        runtimeSettings.cloudSync.remoteUrl = repoData.clone_url;
+        await saveRuntimeSettings();
+
+        // Set up the git remote
+        await setupGitRemote(repoData.clone_url, token);
+
+        return res.json({
+          success: true,
+          existing: true,
+          repo: {
+            name: repoData.name,
+            full_name: repoData.full_name,
+            url: repoData.html_url,
+            clone_url: repoData.clone_url
+          }
+        });
+      }
+
       console.error('[github create-repo] Error:', data.message);
       return res.status(response.status).json({
         success: false,

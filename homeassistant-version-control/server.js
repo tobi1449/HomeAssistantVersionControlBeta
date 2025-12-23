@@ -335,7 +335,9 @@ let runtimeSettings = {
   // Cloud Sync Settings
   cloudSync: {
     enabled: false,
-    remoteUrl: '',
+    remoteUrl: '', // Current active URL (set based on authProvider)
+    githubRemoteUrl: '', // Stored GitHub URL (preserved when switching)
+    customRemoteUrl: '', // Stored Custom URL (preserved when switching)
     authProvider: '', // 'github' or 'generic'
     authToken: '', // OAuth token or PAT
     pushFrequency: 'manual', // 'manual', 'every_commit', 'hourly', 'daily'
@@ -3363,8 +3365,9 @@ app.post('/api/github/create-repo', async (req, res) => {
         const repoData = await repoResponse.json();
         console.log('[github create-repo] Using existing repository:', repoData.clone_url);
 
-        // Save the remote URL
+        // Save the remote URL (both active and GitHub-specific)
         runtimeSettings.cloudSync.remoteUrl = repoData.clone_url;
+        runtimeSettings.cloudSync.githubRemoteUrl = repoData.clone_url;
         await saveRuntimeSettings();
 
         // Set up the git remote
@@ -3391,8 +3394,9 @@ app.post('/api/github/create-repo', async (req, res) => {
 
     console.log('[github create-repo] Created repository:', data.clone_url);
 
-    // Save the remote URL
+    // Save the remote URL (both active and GitHub-specific)
     runtimeSettings.cloudSync.remoteUrl = data.clone_url;
+    runtimeSettings.cloudSync.githubRemoteUrl = data.clone_url;
     await saveRuntimeSettings();
 
     // Set up the git remote
@@ -3501,19 +3505,57 @@ app.post('/api/cloud-sync/settings', async (req, res) => {
     console.log('[cloud-sync settings] Received request:', JSON.stringify(req.body, null, 2));
     const { enabled, remoteUrl, authToken, pushFrequency, includeSecrets, authProvider } = req.body;
 
-    // Update settings
+    // Update basic settings
     console.log('[cloud-sync settings] Updating local settings...');
     if (enabled !== undefined) runtimeSettings.cloudSync.enabled = enabled;
-    if (remoteUrl !== undefined) runtimeSettings.cloudSync.remoteUrl = remoteUrl;
     if (authToken !== undefined) runtimeSettings.cloudSync.authToken = authToken;
     if (pushFrequency !== undefined) runtimeSettings.cloudSync.pushFrequency = pushFrequency;
     if (includeSecrets !== undefined) runtimeSettings.cloudSync.includeSecrets = includeSecrets;
-    if (authProvider !== undefined) runtimeSettings.cloudSync.authProvider = authProvider;
+
+    // Handle provider and URL switching
+    const oldProvider = runtimeSettings.cloudSync.authProvider;
+    const newProvider = authProvider !== undefined ? authProvider : oldProvider;
+
+    if (authProvider !== undefined) {
+      runtimeSettings.cloudSync.authProvider = authProvider;
+    }
+
+    // Determine which URL to use based on provider
+    let effectiveUrl = remoteUrl;
+
+    if (newProvider === 'github') {
+      // Switching to GitHub - use stored GitHub URL if available, or provided URL
+      if (remoteUrl) {
+        // Save to GitHub-specific storage
+        runtimeSettings.cloudSync.githubRemoteUrl = remoteUrl;
+        effectiveUrl = remoteUrl;
+      } else if (runtimeSettings.cloudSync.githubRemoteUrl) {
+        // Restore stored GitHub URL
+        effectiveUrl = runtimeSettings.cloudSync.githubRemoteUrl;
+        console.log('[cloud-sync settings] Restored GitHub URL:', effectiveUrl);
+      }
+    } else if (newProvider === 'generic') {
+      // Switching to Custom - use provided URL or stored custom URL
+      if (remoteUrl) {
+        // Save to custom-specific storage
+        runtimeSettings.cloudSync.customRemoteUrl = remoteUrl;
+        effectiveUrl = remoteUrl;
+      } else if (runtimeSettings.cloudSync.customRemoteUrl) {
+        // Restore stored custom URL
+        effectiveUrl = runtimeSettings.cloudSync.customRemoteUrl;
+        console.log('[cloud-sync settings] Restored Custom URL:', effectiveUrl);
+      }
+    }
+
+    // Update the active URL
+    if (effectiveUrl !== undefined) {
+      runtimeSettings.cloudSync.remoteUrl = effectiveUrl;
+    }
 
     // Set up remote if URL and token provided
-    if (remoteUrl && enabled) {
+    if (effectiveUrl && enabled) {
       console.log('[cloud-sync settings] Setting up git remote...');
-      await setupGitRemote(remoteUrl, authToken || runtimeSettings.cloudSync.authToken);
+      await setupGitRemote(effectiveUrl, authToken || runtimeSettings.cloudSync.authToken);
     }
 
     // Apply secrets tracking configuration immediately
@@ -3539,6 +3581,8 @@ app.get('/api/cloud-sync/settings', async (req, res) => {
       settings: {
         enabled: runtimeSettings.cloudSync.enabled,
         remoteUrl: runtimeSettings.cloudSync.remoteUrl,
+        githubRemoteUrl: runtimeSettings.cloudSync.githubRemoteUrl,
+        customRemoteUrl: runtimeSettings.cloudSync.customRemoteUrl,
         authProvider: runtimeSettings.cloudSync.authProvider,
         hasAuthToken: !!runtimeSettings.cloudSync.authToken,
         pushFrequency: runtimeSettings.cloudSync.pushFrequency,

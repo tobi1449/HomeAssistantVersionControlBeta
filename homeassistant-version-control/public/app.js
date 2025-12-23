@@ -1,5 +1,12 @@
 // API endpoint is relative to the current page
 const API = 'api';
+
+// Helper to strip auth tokens from URLs for safe display
+// Converts http://TOKEN@host:port/path to http://host:port/path
+function stripTokenFromUrl(url) {
+  if (!url) return url;
+  return url.replace(/:\/\/[^@]+@/, '://');
+}
 let currentMode = 'timeline';
 let currentSelection = null;
 let modalData = null;
@@ -1241,9 +1248,10 @@ async function loadCloudSyncSettings() {
             customConnected.style.display = 'block';
 
             if (repoLink) {
-              const repoName = settings.customRemoteUrl.replace(/\.git$/, '').split('/').pop() || 'Repository';
+              const cleanUrl = stripTokenFromUrl(settings.customRemoteUrl);
+              const repoName = cleanUrl.replace(/\.git$/, '').split('/').pop() || 'Repository';
               repoLink.textContent = repoName;
-              repoLink.href = settings.customRemoteUrl.replace(/\.git$/, '');
+              repoLink.href = cleanUrl.replace(/\.git$/, '');
             }
           }
         }
@@ -1386,10 +1394,11 @@ async function testCustomConnection() {
       // Update the repo link
       const repoLink = document.getElementById('customRepoLink');
       if (repoLink) {
-        // Extract repo name from URL (last part before .git)
-        const repoName = remoteUrl.replace(/\.git$/, '').split('/').pop() || 'Repository';
+        // Strip token and extract repo name from URL
+        const cleanUrl = stripTokenFromUrl(remoteUrl);
+        const repoName = cleanUrl.replace(/\.git$/, '').split('/').pop() || 'Repository';
         repoLink.textContent = repoName;
-        repoLink.href = remoteUrl.replace(/\.git$/, '');
+        repoLink.href = cleanUrl.replace(/\.git$/, '');
       }
     } else {
       showNotification(`Connection failed: ${data.error}`, 'error', 5000);
@@ -6803,9 +6812,10 @@ async function handleCloudProviderChange() {
           customConnected.style.display = 'block';
 
           if (repoLink) {
-            const repoName = data.settings.customRemoteUrl.replace(/\.git$/, '').split('/').pop() || 'Repository';
+            const cleanUrl = stripTokenFromUrl(data.settings.customRemoteUrl);
+            const repoName = cleanUrl.replace(/\.git$/, '').split('/').pop() || 'Repository';
             repoLink.textContent = repoName;
-            repoLink.href = data.settings.customRemoteUrl.replace(/\.git$/, '');
+            repoLink.href = cleanUrl.replace(/\.git$/, '');
           }
         }
       } else {

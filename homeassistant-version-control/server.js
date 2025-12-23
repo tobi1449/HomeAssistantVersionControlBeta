@@ -3498,9 +3498,11 @@ app.post('/api/cloud-sync/push', async (req, res) => {
 // Save cloud sync settings
 app.post('/api/cloud-sync/settings', async (req, res) => {
   try {
+    console.log('[cloud-sync settings] Received request:', JSON.stringify(req.body, null, 2));
     const { enabled, remoteUrl, authToken, pushFrequency, includeSecrets } = req.body;
 
     // Update settings
+    console.log('[cloud-sync settings] Updating local settings...');
     if (enabled !== undefined) runtimeSettings.cloudSync.enabled = enabled;
     if (remoteUrl !== undefined) runtimeSettings.cloudSync.remoteUrl = remoteUrl;
     if (authToken !== undefined) runtimeSettings.cloudSync.authToken = authToken;
@@ -3509,16 +3511,21 @@ app.post('/api/cloud-sync/settings', async (req, res) => {
 
     // Set up remote if URL and token provided
     if (remoteUrl && enabled) {
+      console.log('[cloud-sync settings] Setting up git remote...');
       await setupGitRemote(remoteUrl, authToken || runtimeSettings.cloudSync.authToken);
     }
 
     // Apply secrets tracking configuration immediately
+    console.log('[cloud-sync settings] Configuring secrets tracking...');
     await configureSecretsTracking(runtimeSettings.cloudSync.includeSecrets);
 
+    console.log('[cloud-sync settings] Saving runtime settings...');
     await saveRuntimeSettings();
+    console.log('[cloud-sync settings] Success!');
     res.json({ success: true, settings: runtimeSettings.cloudSync });
   } catch (error) {
     console.error('[cloud-sync settings] Error:', error);
+    console.error('[cloud-sync settings] Stack:', error.stack);
     res.status(500).json({ success: false, error: error.message });
   }
 });

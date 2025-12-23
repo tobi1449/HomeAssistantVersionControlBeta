@@ -497,13 +497,13 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                       <img id="githubAvatar" src="" alt="" style="width: 24px; height: 24px; border-radius: 50%;">
                       <a id="githubRepoLink" href="#" target="_blank"
-                        style="color: var(--text-primary); font-size: 14px; font-weight: 500; text-decoration: none;"
+                        style="color: var(--text-primary); font-size: 14px; font-weight: 500; text-decoration: none; flex: 1;"
                         onmouseover="this.style.color='var(--accent-blue)'; this.style.textDecoration='underline'"
                         onmouseout="this.style.color='var(--text-primary)'; this.style.textDecoration='none'">
                       </a>
-                      <div style="color: var(--success); font-size: 12px; margin-left: auto;">✓ Connected</div>
+                      <div style="color: var(--success); font-size: 12px; white-space: nowrap;">✓ Connected</div>
                       <button class="btn" onclick="disconnectGitHub()"
-                        style="background: var(--danger); padding: 2px 8px; font-size: 11px; margin-left: 8px;"
+                        style="background: var(--danger); padding: 2px 8px; font-size: 11px;"
                         data-i18n="settings.cloud_disconnect">Disconnect</button>
                     </div>
                   </div>

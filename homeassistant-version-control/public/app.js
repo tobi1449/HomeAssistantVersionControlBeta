@@ -1265,31 +1265,37 @@ async function saveCloudSyncSettings(silent = false) {
   const includeSecrets = document.getElementById('cloudIncludeSecrets').checked;
 
   try {
+    const payload = {
+      enabled,
+      remoteUrl,
+      pushFrequency,
+      includeSecrets,
+      authProvider
+    };
+    console.log('[saveCloudSyncSettings] Sending payload:', payload);
+
     const response = await fetch('/api/cloud-sync/settings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        enabled,
-        remoteUrl, // Send the URL (might be empty for GitHub if not set yet)
-        pushFrequency,
-        includeSecrets,
-        authProvider // Send explicit provider choice
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
+    console.log('[saveCloudSyncSettings] Response:', data);
+
     if (data.success) {
       if (!silent && false) showNotification('Settings saved', 'success');
       // Don't reload settings here - let the caller handle any needed refreshes
       return true;
     } else {
+      console.error('[saveCloudSyncSettings] Error from server:', data.error);
       showNotification('Error saving settings: ' + data.error, 'error');
       return false;
     }
   } catch (error) {
-    console.error('Error saving cloud settings:', error);
+    console.error('[saveCloudSyncSettings] Exception:', error);
     showNotification('Error saving settings', 'error');
     return false;
   }
@@ -1459,6 +1465,8 @@ async function connectGitHub() {
           // Create the repository automatically
           await createGitHubRepo();
           await loadGitHubUser();
+          // Reload settings to ensure everything is in sync
+          await loadCloudSyncSettings();
           return;
         }
 
@@ -1553,16 +1561,17 @@ async function loadGitHubUser() {
 
       document.getElementById('githubAvatar').src = data.user.avatar_url;
 
-      // Populate the repo link with repo name from the remoteUrl
+      // Populate the repo link - shows username but links to repo
       const repoLink = document.getElementById('githubRepoLink');
       const remoteUrl = document.getElementById('cloudRemoteUrl')?.value;
-      if (repoLink && remoteUrl) {
-        // Convert git URL to browser URL (remove .git suffix if present)
-        const browserUrl = remoteUrl.replace(/\.git$/, '');
-        repoLink.href = browserUrl;
-        // Extract just the repo name (last part of URL path)
-        const repoName = browserUrl.split('/').pop() || 'Repository';
-        repoLink.textContent = repoName;
+      if (repoLink) {
+        // Show the user's name or login
+        repoLink.textContent = data.user.name || data.user.login;
+        // Link to the repo if available
+        if (remoteUrl) {
+          const browserUrl = remoteUrl.replace(/\.git$/, '');
+          repoLink.href = browserUrl;
+        }
       }
     } else {
       // Not connected - show repo name section

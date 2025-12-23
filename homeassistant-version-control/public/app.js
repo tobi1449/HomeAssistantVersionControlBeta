@@ -6720,4 +6720,8 @@ async function handleCloudProviderChange() {
       console.log('[handleCloudProviderChange] Could not fetch custom URL:', e);
     }
   }
+
+  // Auto-save settings when provider changes (silent - no notification)
+  // This ensures Push Now immediately uses the new provider
+  await saveCloudSyncSettings(true);
 }

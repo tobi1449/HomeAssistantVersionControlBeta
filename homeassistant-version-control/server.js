@@ -1741,7 +1741,9 @@ function initializeWatcher() {
     `${CONFIG_PATH}/.storage/lovelace`,
     `${CONFIG_PATH}/.storage/lovelace_dashboards`,
     `${CONFIG_PATH}/.storage/lovelace_resources`,
-    `${CONFIG_PATH}/.storage/lovelace.*`
+    `${CONFIG_PATH}/.storage/lovelace.*`,
+    `${CONFIG_PATH}/.gitignore`,
+    `${CONFIG_PATH}/.gitconfig`
   ];
 
   watcher = chokidar.watch(watchPattern, {
@@ -1796,14 +1798,15 @@ function initializeWatcher() {
           await initRepo();
         }
 
-        // Check if file is a config file (has allowed extension) or is a lovelace storage file
+        // Check if file is a config file (has allowed extension), lovelace storage file, or git control file
         const hasAllowedExt = getConfiguredExtensions().some(ext =>
           relativePath.toLowerCase().endsWith(ext)
         );
 
         const isLovelaceFile = relativePath.startsWith('.storage/lovelace');
+        const isGitControlFile = relativePath === '.gitignore' || relativePath === '.gitconfig';
 
-        if (!hasAllowedExt && !isLovelaceFile) {
+        if (!hasAllowedExt && !isLovelaceFile && !isGitControlFile) {
           console.log(`[watcher] Skipping non-config file: ${relativePath}`);
           debounceTimers.delete(filePath);
           return;
@@ -1835,11 +1838,12 @@ function initializeWatcher() {
             const filePath = f.path.trim(); // Trim to remove leading/trailing spaces from git status
             const hasAllowedExt = getConfiguredExtensions().some(ext => filePath.endsWith(ext));
             const isLovelaceFile = filePath.startsWith('.storage/lovelace');
-            const shouldInclude = hasAllowedExt || isLovelaceFile;
+            const isGitControlFile = filePath === '.gitignore' || filePath === '.gitconfig';
+            const shouldInclude = hasAllowedExt || isLovelaceFile || isGitControlFile;
 
             // Debug logging
             if (!shouldInclude) {
-              console.log(`[watcher] Filtering out file: ${filePath} (hasAllowedExt: ${hasAllowedExt}, isLovelaceFile: ${isLovelaceFile})`);
+              console.log(`[watcher] Filtering out file: ${filePath} (hasAllowedExt: ${hasAllowedExt}, isLovelaceFile: ${isLovelaceFile}, isGitControlFile: ${isGitControlFile})`);
             }
 
             return shouldInclude;

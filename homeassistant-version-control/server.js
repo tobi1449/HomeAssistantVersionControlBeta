@@ -348,6 +348,11 @@ let runtimeSettings = {
     lastPushTime: null,
     lastPushStatus: null, // 'success', 'failed'
     lastPushError: null
+  },
+  // File extension configuration - what gets tracked/ignored
+  extensions: {
+    include: ['yaml', 'yml'], // File extensions to track
+    exclude: ['secrets.yaml'] // Specific files to ignore (always ignored regardless of extension)
   }
 };
 
@@ -391,35 +396,32 @@ function getConfiguredExtensions() {
 const IGNORED_NESTED_REPOS = [];
 
 /**
- * Generate .gitignore content based on configured extensions
- * @param {Array<string>} extraIgnores - Additional paths to ignore
- * @param {boolean} includeSecrets - Whether to include secrets.yaml
- * @param {Array<string>} userExtensions - Additional extensions from add-on config
+ * Generate .gitignore contents with managed section
+ * @param {Array<string>} extraIgnores - Additional paths to ignore (nested repos)
+ * @param {Object} extensions - Extensions config with include/exclude arrays
  * @returns {string} .gitignore file content
  */
-function generateGitignoreContent(extraIgnores = [], includeSecrets = false, userExtensions = []) {
+function generateGitignoreContent(extraIgnores = [], extensions = null) {
   const MANAGED_START = '# === Home Assistant Version Control Managed (do not edit below) ===';
   const MANAGED_END = '# === End Home Assistant Version Control Managed ===';
+
+  // Use provided extensions or defaults
+  const ext = extensions || runtimeSettings.extensions || { include: ['yaml', 'yml'], exclude: ['secrets.yaml'] };
+  const includeExts = ext.include || ['yaml', 'yml'];
+  const excludeFiles = ext.exclude || ['secrets.yaml'];
 
   let content = `# Only track specific file types\n# Ignore everything by default\n*\n\n`;
 
   // Start managed section
   content += `${MANAGED_START}\n`;
 
-  // Default extensions (yaml/yml)
-  content += `!*.yaml\n`;
-  content += `!*.yml\n`;
-  if (configOptions.invisible_files) {
-    content += `!**/.??*.yaml\n`;
-    content += `!**/.??*.yml\n`;
-  }
-
-  // Add user-configured extensions from add-on options
-  for (const ext of userExtensions) {
-    const extension = ext.replace('.', ''); // Remove the dot for the pattern
-    content += `!*.${extension}\n`;
+  // Add included extensions
+  content += `# Tracked file types\n`;
+  for (const extension of includeExts) {
+    const cleanExt = extension.replace(/^\./, ''); // Remove leading dot if present
+    content += `!*.${cleanExt}\n`;
     if (configOptions.invisible_files) {
-      content += `!**/.??*.${extension}\n`;
+      content += `!**/.??*.${cleanExt}\n`;
     }
   }
 
@@ -448,9 +450,13 @@ function generateGitignoreContent(extraIgnores = [], includeSecrets = false, use
     }
   }
 
-  // Always ignore secrets.yaml by default - user must manually remove from .gitignore to track locally
-  // The includeSecrets toggle only controls cloud push, not local tracking
-  content += `\n# Limit exposure of secrets (remove this line to track locally)\nsecrets.yaml\n`;
+  // Add excluded files (secrets.yaml, etc.)
+  if (excludeFiles.length > 0) {
+    content += `\n# Excluded files\n`;
+    for (const file of excludeFiles) {
+      content += `${file}\n`;
+    }
+  }
 
   return content;
 }
@@ -706,8 +712,7 @@ async function initRepo() {
 
       // Create .gitignore to limit git to only config files
       const gitignorePath = path.join(CONFIG_PATH, '.gitignore');
-      const includeSecrets = runtimeSettings.cloudSync ? runtimeSettings.cloudSync.includeSecrets : false;
-      const gitignoreContent = generateGitignoreContent(nestedRepos, includeSecrets, additionalExtensions);
+      const gitignoreContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
       try {
         await fsPromises.access(gitignorePath, fs.constants.F_OK);
         console.log('[init] .gitignore already exists in CONFIG_PATH');
@@ -769,8 +774,7 @@ async function initRepo() {
         if (additionalExtensions.length > 0) {
           console.log('[init] Updating .gitignore managed section with additional extensions...');
           const existingContent = await fsPromises.readFile(gitignorePath, 'utf8');
-          const includeSecrets = runtimeSettings.cloudSync ? runtimeSettings.cloudSync.includeSecrets : false;
-          const newContent = generateGitignoreContent(nestedRepos, includeSecrets, additionalExtensions);
+          const newContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
 
           // Only update if content actually changed
           if (existingContent.trim() !== newContent.trim()) {
@@ -785,8 +789,7 @@ async function initRepo() {
       } catch (error) {
         // .gitignore doesn't exist, create default one
         console.log('[init] Creating default .gitignore in CONFIG_PATH...');
-        const includeSecrets = runtimeSettings.cloudSync ? runtimeSettings.cloudSync.includeSecrets : false;
-        const gitignoreContent = generateGitignoreContent(nestedRepos, includeSecrets, additionalExtensions);
+        const gitignoreContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
         await fsPromises.writeFile(gitignorePath, gitignoreContent, 'utf8');
         console.log('[init] Created .gitignore in CONFIG_PATH');
       }
@@ -932,7 +935,29 @@ app.post('/api/runtime-settings', async (req, res) => {
       runtimeSettings.retentionUnit = newSettings.retentionUnit;
     }
 
+    // Handle extensions settings
+    if (newSettings.extensions !== undefined) {
+      if (newSettings.extensions.include !== undefined && Array.isArray(newSettings.extensions.include)) {
+        runtimeSettings.extensions.include = newSettings.extensions.include
+          .map(ext => ext.trim().replace(/^\./, '')) // Remove leading dots
+          .filter(ext => ext.length > 0);
+      }
+      if (newSettings.extensions.exclude !== undefined && Array.isArray(newSettings.extensions.exclude)) {
+        runtimeSettings.extensions.exclude = newSettings.extensions.exclude
+          .map(file => file.trim())
+          .filter(file => file.length > 0);
+      }
 
+      // Regenerate .gitignore with new extensions
+      try {
+        const gitignorePath = path.join(CONFIG_PATH, '.gitignore');
+        const newContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
+        await fsPromises.writeFile(gitignorePath, newContent, 'utf8');
+        console.log('[settings] Updated .gitignore with new extensions');
+      } catch (error) {
+        console.error('[settings] Failed to update .gitignore:', error);
+      }
+    }
 
     // Save to file
     await saveRuntimeSettings();
@@ -2982,7 +3007,7 @@ async function configureSecretsTracking(include) {
     // 1. Manage .gitignore using the centralized generator
     // This ensures consistency with init/update logic
     const nestedRepos = await findNestedGitRepos();
-    const desiredGitignoreContent = generateGitignoreContent(nestedRepos, include, additionalExtensions);
+    const desiredGitignoreContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
 
     let currentGitignoreContent = '';
     try {

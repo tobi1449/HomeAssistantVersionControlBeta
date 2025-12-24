@@ -1058,6 +1058,139 @@ function refreshCurrentView() {
 }
 
 
+// =====================================
+// File Extensions Tag Input Functions
+// =====================================
+
+// Current extensions state (loaded from server)
+let currentExtensions = { include: ['yaml', 'yml'], exclude: ['secrets.yaml'] };
+
+function handleExtensionInput(event, type) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const input = event.target;
+    const value = input.value.trim().replace(/^\./, ''); // Remove leading dot
+
+    if (value) {
+      addExtensionTag(type, value);
+      input.value = '';
+    }
+  }
+}
+
+function addExtensionTag(type, value) {
+  // Don't add duplicates
+  if (type === 'include' && currentExtensions.include.includes(value)) return;
+  if (type === 'exclude' && currentExtensions.exclude.includes(value)) return;
+
+  // Update state
+  if (type === 'include') {
+    currentExtensions.include.push(value);
+  } else {
+    currentExtensions.exclude.push(value);
+  }
+
+  // Re-render tags
+  renderExtensionTags();
+}
+
+function removeExtensionTag(type, value) {
+  if (type === 'include') {
+    currentExtensions.include = currentExtensions.include.filter(v => v !== value);
+  } else {
+    currentExtensions.exclude = currentExtensions.exclude.filter(v => v !== value);
+  }
+  renderExtensionTags();
+}
+
+function renderExtensionTags() {
+  // Render include tags
+  const includeContainer = document.getElementById('includeExtensions');
+  if (includeContainer) {
+    const input = includeContainer.querySelector('input');
+    includeContainer.innerHTML = '';
+    currentExtensions.include.forEach(ext => {
+      const tag = createTagElement('include', ext);
+      includeContainer.appendChild(tag);
+    });
+    includeContainer.appendChild(input || createTagInput('include'));
+  }
+
+  // Render exclude tags
+  const excludeContainer = document.getElementById('excludeExtensions');
+  if (excludeContainer) {
+    const input = excludeContainer.querySelector('input');
+    excludeContainer.innerHTML = '';
+    currentExtensions.exclude.forEach(file => {
+      const tag = createTagElement('exclude', file);
+      excludeContainer.appendChild(tag);
+    });
+    excludeContainer.appendChild(input || createTagInput('exclude'));
+  }
+}
+
+function createTagElement(type, value) {
+  const tag = document.createElement('span');
+  tag.className = 'extension-tag';
+  tag.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--primary);
+    color: white;
+    border-radius: 12px;
+    font-size: 13px;
+  `;
+  tag.innerHTML = `
+    ${value}
+    <span onclick="removeExtensionTag('${type}', '${value}')" style="cursor: pointer; opacity: 0.7; font-size: 14px;">&times;</span>
+  `;
+  return tag;
+}
+
+function createTagInput(type) {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = type === 'include' ? 'includeExtensionInput' : 'excludeExtensionInput';
+  input.placeholder = type === 'include' ? 'Add extension...' : 'Add file...';
+  input.style.cssText = `
+    flex: 1;
+    min-width: 100px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+  `;
+  input.onkeydown = (e) => handleExtensionInput(e, type);
+  return input;
+}
+
+function loadExtensionsFromSettings(settings) {
+  if (settings.extensions) {
+    currentExtensions = {
+      include: settings.extensions.include || ['yaml', 'yml'],
+      exclude: settings.extensions.exclude || ['secrets.yaml']
+    };
+  }
+  renderExtensionTags();
+}
+
+async function loadExtensionsSettings() {
+  try {
+    const response = await fetch('/api/runtime-settings');
+    const data = await response.json();
+    if (data.success && data.settings) {
+      loadExtensionsFromSettings(data.settings);
+    }
+  } catch (error) {
+    console.error('Failed to load extensions settings:', error);
+    // Use defaults
+    renderExtensionTags();
+  }
+}
+
 // Settings modal functions
 function openSettings() {
   const settingsModal = document.getElementById('settingsModal');
@@ -1066,6 +1199,9 @@ function openSettings() {
 
   // Load cloud sync settings when modal opens
   loadCloudSyncSettings();
+
+  // Load extensions settings
+  loadExtensionsSettings();
 }
 
 function closeSettings() {
@@ -1115,7 +1251,8 @@ async function saveSettings() {
         historyRetention,
         retentionType,
         retentionValue,
-        retentionUnit
+        retentionUnit,
+        extensions: currentExtensions
       })
     });
 

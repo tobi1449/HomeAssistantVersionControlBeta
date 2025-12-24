@@ -17,7 +17,7 @@ Home Assistant Version Control provides complete version history for your setup.
 ---
 
 ## What's New
-- **Track More Than YAML:** Configure which file types to track directly in Settings. Add `.sh`, `.py`, `.json`, or any extension you need.
+- **Track More Than YAML:** Configure which file types to track in the add-on's Configuration tab. Add `.sh`, `.py`, `.json`, or any extension you need.
 - **Cloud Backup:** Push your configuration to a private GitHub or Gitea repository.
 * **Recover Deleted Items:** View and restore files, automations, and scripts that have been deleted. Look for the "Deleted" option in the sort menu.
 * **Progressive History Loading:** Versions now load faster, displaying results as they're found.

@@ -324,9 +324,6 @@ let configOptions = {
   invisible_files: true
 };
 
-// Additional file extensions configured via add-on options
-let additionalExtensions = [];
-
 // Runtime settings loaded from file
 let runtimeSettings = {
   debounceTime: 3,
@@ -663,13 +660,18 @@ async function initRepo() {
       if (config.liveConfigPath) {
         CONFIG_PATH = config.liveConfigPath;
       }
-      // Load additional extensions from add-on config
-      if (config.additional_extensions && Array.isArray(config.additional_extensions)) {
-        additionalExtensions = config.additional_extensions
-          .map(ext => ext.trim())
-          .filter(ext => ext.length > 0)
-          .map(ext => ext.startsWith('.') ? ext : `.${ext}`); // Ensure extensions have dots
-        console.log(`[init] Additional extensions from config:`, additionalExtensions);
+      // Load extensions from add-on config - these override runtimeSettings
+      if (config.include_extensions && Array.isArray(config.include_extensions)) {
+        runtimeSettings.extensions.include = config.include_extensions
+          .map(ext => ext.trim().replace(/^\./, '')) // Remove leading dots
+          .filter(ext => ext.length > 0);
+        console.log(`[init] Include extensions from config:`, runtimeSettings.extensions.include);
+      }
+      if (config.exclude_files && Array.isArray(config.exclude_files)) {
+        runtimeSettings.extensions.exclude = config.exclude_files
+          .map(file => file.trim())
+          .filter(file => file.length > 0);
+        console.log(`[init] Exclude files from config:`, runtimeSettings.extensions.exclude);
       }
       console.log(`[init] Using hardcoded file format options:`, configOptions);
     } catch (error) {
@@ -770,21 +772,17 @@ async function initRepo() {
       try {
         await fsPromises.access(gitignorePath, fs.constants.F_OK);
 
-        // If user has configured additional extensions, update the managed section
-        if (additionalExtensions.length > 0) {
-          console.log('[init] Updating .gitignore managed section with additional extensions...');
-          const existingContent = await fsPromises.readFile(gitignorePath, 'utf8');
-          const newContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
+        // Always update .gitignore to ensure extensions from config are applied
+        console.log('[init] Updating .gitignore with configured extensions...');
+        const existingContent = await fsPromises.readFile(gitignorePath, 'utf8');
+        const newContent = generateGitignoreContent(nestedRepos, runtimeSettings.extensions);
 
-          // Only update if content actually changed
-          if (existingContent.trim() !== newContent.trim()) {
-            await fsPromises.writeFile(gitignorePath, newContent, 'utf8');
-            console.log('[init] Updated .gitignore with configured extensions:', additionalExtensions);
-          } else {
-            console.log('[init] .gitignore already up to date');
-          }
+        // Only update if content actually changed
+        if (existingContent.trim() !== newContent.trim()) {
+          await fsPromises.writeFile(gitignorePath, newContent, 'utf8');
+          console.log('[init] Updated .gitignore with extensions:', runtimeSettings.extensions);
         } else {
-          console.log('[init] .gitignore already exists - respecting user\'s custom patterns');
+          console.log('[init] .gitignore already up to date');
         }
       } catch (error) {
         // .gitignore doesn't exist, create default one

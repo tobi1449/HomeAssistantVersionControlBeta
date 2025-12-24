@@ -6,6 +6,11 @@
 - **Extension Configuration UI:** Add tracked file extensions from the add-on Configuration tab. Uses Home Assistant's native bubble/tag input.
 - Extensions are added to a managed section in `.gitignore`, preserving any custom patterns you've added.
 
+### Fixed
+- **Watcher Noise:** Exclude database files (`.db`, `.db-wal`), log files, and zigbee2mqtt runtime files from triggering the watcher.
+- **Options Reading:** Fixed async file reading for add-on configuration options.
+- **Secrets Protection:** Automatically removes `secrets.yaml` from git tracking on startup and prevents it from being staged (respects the includeSecrets toggle).
+
 ## [1.0.3]
 
 ### Added

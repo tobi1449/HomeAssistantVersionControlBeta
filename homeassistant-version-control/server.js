@@ -793,6 +793,23 @@ async function initRepo() {
       }
     }
 
+    // Protect secrets.yaml - if not configured to include secrets, ensure it's not tracked
+    const includeSecrets = runtimeSettings.cloudSync ? runtimeSettings.cloudSync.includeSecrets : false;
+    if (!includeSecrets && isRepo) {
+      try {
+        // Check if secrets.yaml is tracked by git
+        const secretsPath = path.join(CONFIG_PATH, 'secrets.yaml');
+        const lsResult = await gitRaw(['ls-files', 'secrets.yaml']);
+        if (lsResult && lsResult.trim()) {
+          console.log('[init] ⚠️  secrets.yaml is tracked but includeSecrets is OFF - removing from index...');
+          await gitRmCached('secrets.yaml');
+          console.log('[init] ✓ Removed secrets.yaml from git tracking (file preserved on disk)');
+        }
+      } catch (error) {
+        // Ignore errors - file might not exist or other edge cases
+      }
+    }
+
     // Clean up nested repos from index BEFORE doing git add
     // This prevents them from being re-committed in the startup backup
     if (nestedRepos.length > 0) {
@@ -1860,9 +1877,18 @@ function initializeWatcher() {
         }
 
         // Get all staged files (git already filtered based on .gitignore)
-        const stagedFiles = status.files
+        let stagedFiles = status.files
           .filter(f => f.index !== ' ' && f.index !== '?')
           .map(f => f.path.trim());
+
+        // Pre-commit safety: check for secrets.yaml if includeSecrets is OFF
+        const includeSecrets = runtimeSettings.cloudSync ? runtimeSettings.cloudSync.includeSecrets : false;
+        if (!includeSecrets && stagedFiles.includes('secrets.yaml')) {
+          console.log('[watcher] ⚠️  secrets.yaml was staged but includeSecrets is OFF - unstaging...');
+          await gitResetHead('secrets.yaml');
+          stagedFiles = stagedFiles.filter(f => f !== 'secrets.yaml');
+          console.log('[watcher] ✓ Unstaged secrets.yaml before commit');
+        }
 
         console.log(`[watcher] Staged files (respecting .gitignore): ${stagedFiles.join(', ')} (${stagedFiles.length} file(s))`);
 

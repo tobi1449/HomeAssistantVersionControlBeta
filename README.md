@@ -4,6 +4,16 @@
 
 Home Assistant Version Control provides complete version history for your setup. It automatically tracks every change to your YAML configuration files using a robust local Git backend. Browse your history, visualize diffs, and restore individual files or your entire configuration to any previous state with a single click.
 
+---
+
+## What's New
+- **Cloud Backup:** Push your configuration to a private GitHub or Gitea repository. Choose to sync **manually**, **daily**, or **automatically after every change**.
+- **Track More than Just YAML:** Now you can select any file format to track and backup! Configure extensions like `.sh`, `.py`, `.json` directly in the add-on's Configuration tab.
+* **Recover Deleted Items:** View and restore files, automations, and scripts that have been deleted. Look for the "Deleted" option in the sort menu.
+* **Progressive History Loading:** Versions now load faster, displaying results as they're found.
+
+---
+
 ![Screenshot 1](https://raw.githubusercontent.com/DiggingForDinos/HomeAssistantVersionControlBeta/main/images/screenshots/1.png)
 ![Screenshot 2](https://raw.githubusercontent.com/DiggingForDinos/HomeAssistantVersionControlBeta/main/images/screenshots/2.1.png)
 ![Screenshot 3](https://raw.githubusercontent.com/DiggingForDinos/HomeAssistantVersionControlBeta/main/images/screenshots/3.png)
@@ -13,13 +23,6 @@ Home Assistant Version Control provides complete version history for your setup.
 > [!IMPORTANT]
 > 1. **Existing Git Repos:** If you already have a `.git` folder in your `/config` directory, **back it up first**. The add-on will use your existing repository but may conflict with your workflow through auto-commits and automatic merging of old history. **For best results, delete the existing `.git` folder** and let the add-on create a fresh repository.
 > 2. **Backup Strategy:** While this add-on provides excellent version control, **do not rely on it as your sole backup method**. Always maintain external backups (e.g., Google Drive, Samba) of your Home Assistant instance.
-
----
-
-## What's New
-- **Cloud Backup:** Push your configuration to a private GitHub or Gitea repository.
-* **Recover Deleted Items:** View and restore files, automations, and scripts that have been deleted. Look for the "Deleted" option in the sort menu.
-* **Progressive History Loading:** Versions now load faster, displaying results as they're found.
 
 ---
 

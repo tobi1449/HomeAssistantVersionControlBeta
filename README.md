@@ -123,7 +123,7 @@ docker run -d \
   -e SUPERVISOR_TOKEN=your_long_lived_access_token_here \
   -e HA_URL=http://homeassistant.local:8123 \
   --name home-assistant-version-control \
-  ghcr.io/diggingfordinos/ha-version-control:latest
+  ghcr.io/diggingfordinos/homeassistantversioncontrolbeta:latest
 ```
 
 Replace `/path/to/your/config` with the actual path to your Home Assistant configuration directory.
@@ -133,7 +133,7 @@ Replace `/path/to/your/config` with the actual path to your Home Assistant confi
 ```bash
 git clone https://github.com/DiggingForDinos/HomeAssistantVersionControlBeta.git
 cd HomeAssistantVersionControlBeta/homeassistant-version-control
-docker build --build-arg BUILD_FROM=alpine:latest -t home-assistant-version-control .
+docker build --build-arg BUILD_FROM=alpine:latest -t homeassistantversioncontrolbeta .
 
 docker run -d \
   -p 54001:54001 \
@@ -142,7 +142,7 @@ docker run -d \
   -e SUPERVISOR_TOKEN=your_long_lived_access_token_here \
   -e HA_URL=http://homeassistant.local:8123 \
   --name home-assistant-version-control \
-  home-assistant-version-control
+  homeassistantversioncontrolbeta
 ```
 
 > [!NOTE]

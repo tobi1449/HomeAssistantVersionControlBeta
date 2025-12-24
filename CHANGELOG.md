@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4]
+
+### Added
+- **Extension Configuration UI:** Add tracked file extensions from the add-on Configuration tab. Uses Home Assistant's native bubble/tag input.
+- Extensions are added to a managed section in `.gitignore`, preserving any custom patterns you've added.
+
 ## [1.0.3]
 
 ### Added
